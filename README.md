@@ -5,20 +5,20 @@ A centrailized and verified forum for Jahangirnagar University.
 
 
 ```bash
-# First, clone the repo:
+# Clone the repo:
 git clone https://github.com/JU-Stellar-Wind-Enterprise/JU-Forum.git
 
 # Move into the project:
 cd JU-Forum
+
+# Enable corepack to use pnpm
+corepack enable
 
 # Install dependencies:
 pnpm install
 
 # Start the development server:
 pnpm dev
-
-# Run unit tests:
-pnpm test
 ```
 
 ## Learn More
