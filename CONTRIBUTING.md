@@ -44,12 +44,33 @@ Make sure all unit tests pass before opening a PR.
 
 ### Create a Branch
 
-Do not commit directly to `main`. Create a new branch using the format `<type>/<your-name>/<short-description>`:
+Do not commit directly to `main` or `develop`. Create a new branch using the format `<type>/<your-name>/<short-description>`:
 
 ```bash
-git checkout -b feature/kaium/user-auth
+git checkout -b feat/kaium/user-auth
 
 ```
+
+#### Branch Types (`<type>`):
+
+* `feat/` — New feature or major enhancement
+(e.g., `feat/kaium/user-auth`)
+* `fix/` — Bug fix
+(e.g., `fix/mawa/login-redirect-loop`)
+* `docs/` — Documentation changes only
+(e.g., `docs/robin/update-readme`)
+* `style/` — Formatting, CSS changes, missing semi-colons
+(e.g., `style/arman/navbar-responsive-layout`)
+* `refactor/` — Code changes that neither fix a bug nor add a feature
+(e.g., `refactor/mariam/cleanup-api-routes`)
+* `test/` — Adding or updating tests
+(e.g., `test/orthita/auth-unit-tests`)
+* `chore/` — Maintenance tasks, dependency updates, or config changes
+(e.g., `chore/trisha/update-tailwind-config`)
+
+> **Note:** Use lowercase hyphenated words (`kebab-case`) for your short description (e.g., `user-auth`, not `userAuth` or `user_auth`).
+
+---
 
 ### Stage & Commit Changes
 
@@ -60,17 +81,22 @@ git commit -m "feat: implement user authentication UI"
 
 ```
 
-**Conventional Commit Prefixes:**
+#### Conventional Commit Prefixes:
 
-* `feat:` A new feature
-* `fix:` A bug fix
+* `feat:` New feature or major enhancement
+(e.g., `"feat: add user profile picture upload"`)
+* `fix:` Bug fix
+(e.g., `"fix: resolve session expiration redirect loop"`)
 * `docs:` Documentation changes only
-* `style:` Formatting, missing semi-colons, etc. (no logical changes)
+(e.g., `"docs: update API setup instructions in README"`)
+* `style:` Formatting, CSS tweaks, missing semi-colons (no logical changes)
+(e.g., `"style: fix mobile navbar padding and flex alignment"`)
 * `refactor:` Code refactoring without functionality changes
+(e.g., `"refactor: extract JWT token verification into middleware"`)
 * `test:` Adding or updating tests
+(e.g., `"test: add unit test suite for auth helper"`)
 * `chore:` Maintenance tasks, dependency updates, or configuration changes
-
-
+(e.g., `"chore: update tailwindcss to v3.4.0"`)
 
 ### Push to Remote
 
