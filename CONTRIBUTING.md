@@ -136,6 +136,7 @@ Control-click or copy that URL into your browser to open the PR creation page.
 ### PR Title & Body Format
 
 **Title:** `<type>: <short summary>` (e.g., `feat: add authentication login component`)
+PR title uses the same format as commit messages.
 
 **Body Template:**
 
