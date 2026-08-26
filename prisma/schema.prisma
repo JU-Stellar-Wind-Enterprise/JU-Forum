@@ -1,0 +1,157 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  STUDENT
+  FACULTY
+  STAFF
+  MODERATOR
+  ADMIN
+  SYSTEM_ADMIN
+}
+
+enum AccountStatus {
+  PENDING_APPROVAL
+  OTP_PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum PriorityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TargetAudience {
+  ALL
+  STUDENTS
+  FACULTY
+  STAFF
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id                  String        @id @default(uuid())
+  name                String
+  email               String        @unique
+  passwordHash        String
+  batch               String?
+  role                UserRole      @default(STUDENT)
+  status              AccountStatus @default(PENDING_APPROVAL)
+  appliedForModerator Boolean       @default(false)
+
+  nickname            String?       @unique
+  profilePictureUrl   String?
+  aboutMe             String?
+  nicknameLastChanged DateTime?
+
+  otpCode             String?
+  otpExpiresAt        DateTime?
+  failedLoginAttempts Int           @default(0)
+  lockoutUntil        DateTime?
+  
+  isDeleted           Boolean       @default(false) // Soft delete to preserve posts
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  subforums           Subforum[]    @relation("SubforumOwner")
+  posts               Post[]
+  announcements       Announcement[]
+  postVotes           PostVote[]
+
+  @@map("users")
+}
+
+model Subforum {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  isApproved  Boolean  @default(false)
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User     @relation("SubforumOwner", fields: [ownerId], references: [id])
+  posts       Post[]
+
+  @@index([ownerId])
+  @@map("subforums")
+}
+
+model Post {
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  isLocked   Boolean  @default(false)
+  isArchived Boolean  @default(false)
+  authorId   String
+  subforumId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  author     User       @relation(fields: [authorId], references: [id])
+  subforum   Subforum   @relation(fields: [subforumId], references: [id], onDelete: Cascade)
+  votes      PostVote[]
+
+  @@index([subforumId])
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+model Announcement {
+  id             String         @id @default(uuid())
+  title          String
+  content        String
+  priority       PriorityLevel  @default(MEDIUM)
+  targetAudience TargetAudience @default(ALL)
+  authorId       String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  author         User           @relation(fields: [authorId], references: [id])
+
+  @@index([authorId])
+  @@index([createdAt])
+  @@map("announcements")
+}
+
+model PostVote {
+  userId String
+  postId String
+  type   VoteType
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([postId])
+  @@map("post_votes")
+}
