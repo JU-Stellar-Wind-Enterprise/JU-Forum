@@ -133,6 +133,7 @@ model Announcement {
   priority       PriorityLevel  @default(MEDIUM)
   targetAudience TargetAudience @default(ALL)
   authorId       String
+  expiresAt      DateTime?
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
