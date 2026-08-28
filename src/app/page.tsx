@@ -9,22 +9,22 @@ export default async function Home() {
   if (!user) redirect("/login");
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-zinc-50 p-6">
-      <section className="w-full max-w-2xl rounded-2xl bg-white p-8 shadow-sm">
+    <main className="flex flex-1 items-center justify-center p-6 sm:p-10">
+      <section className="w-full max-w-3xl rounded-lg border border-sky-100 bg-white p-8 shadow-sm">
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-zinc-500">JU Forum</p>
-            <h1 className="mt-2 text-3xl font-bold text-zinc-900">
+            <p className="text-sm font-semibold text-sky-600">JU Forum</p>
+            <h1 className="mt-2 text-3xl font-bold text-slate-900">
               Welcome, {user.name}
             </h1>
-            <p className="mt-2 text-zinc-600">
+            <p className="mt-2 text-slate-600">
               You are successfully logged in.
             </p>
           </div>
           <form action={logoutAction}>
             <button
               type="submit"
-              className="rounded border px-4 py-2 text-sm hover:bg-zinc-50"
+              className="rounded-md border border-sky-200 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-sky-50"
             >
               Log out
             </button>
@@ -77,20 +77,23 @@ function FeatureLink({
   description: string;
 }) {
   return (
-    <Link href={href} className="rounded-lg border p-4 hover:bg-zinc-50">
-      <span className="font-semibold text-zinc-900">{title}</span>
-      <span className="mt-1 block text-sm text-zinc-600">{description}</span>
+    <Link
+      href={href}
+      className="rounded-lg border border-sky-100 p-4 hover:border-sky-300 hover:bg-sky-50/60"
+    >
+      <span className="font-semibold text-slate-900">{title}</span>
+      <span className="mt-1 block text-sm text-slate-600">{description}</span>
     </Link>
   );
 }
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-zinc-50 p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+    <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
       </p>
-      <p className="mt-2 break-words font-medium text-zinc-900">{value}</p>
+      <p className="mt-2 break-words font-medium text-slate-900">{value}</p>
     </div>
   );
 }

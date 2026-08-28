@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PageShell } from "@/components/layout/PageShell";
 import { ProfileCard } from "@/components/profile/ProfileCard";
 import { getCurrentUser } from "@/lib/session";
 import { getPublicProfile } from "@/services/profile.service";
@@ -9,8 +10,8 @@ export default async function ProfilePage() {
   const profile = await getPublicProfile(user.id);
   if (!profile) redirect("/login");
   return (
-    <main className="flex justify-center p-8">
+    <PageShell centered>
       <ProfileCard profile={profile} />
-    </main>
+    </PageShell>
   );
 }
