@@ -9,16 +9,24 @@ import {
 import { prisma } from "@/lib/prisma";
 
 async function main() {
+  console.log("Wiping existing data...");
+
+  // 1. Clear tables in reverse dependency order
+  await prisma.$transaction([
+    prisma.postVote.deleteMany(),
+    prisma.post.deleteMany(),
+    prisma.announcement.deleteMany(),
+    prisma.subforum.deleteMany(),
+    prisma.user.deleteMany(),
+  ]);
+
   console.log("Seeding database...");
 
-  // Hash the default password
   const defaultPasswordHash = await bcrypt.hash("123swe", 10);
 
-  // 1. Create Admin
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@juniv.edu" },
-    update: {},
-    create: {
+  // 2. Create Users
+  const admin = await prisma.user.create({
+    data: {
       name: "System Admin",
       email: "admin@juniv.edu",
       passwordHash: defaultPasswordHash,
@@ -27,38 +35,29 @@ async function main() {
     },
   });
 
-  // 2. Create Students
-  const student1 = await prisma.user.upsert({
-    where: { email: "student1@juniv.edu" },
-    update: {},
-    create: {
+  const student1 = await prisma.user.create({
+    data: {
       name: "Alice Student",
       email: "student1@juniv.edu",
       passwordHash: defaultPasswordHash,
-      batch: "50",
       role: UserRole.STUDENT,
       status: AccountStatus.ACTIVE,
     },
   });
 
-  await prisma.user.upsert({
-    where: { email: "student2@juniv.edu" },
-    update: {},
-    create: {
+  await prisma.user.create({
+    data: {
       name: "Bob Student",
       email: "student2@juniv.edu",
       passwordHash: defaultPasswordHash,
-      batch: "51",
       role: UserRole.STUDENT,
       status: AccountStatus.ACTIVE,
     },
   });
 
   // 3. Create a Subforum
-  const subforum = await prisma.subforum.upsert({
-    where: { name: "General Discussion" },
-    update: {},
-    create: {
+  const subforum = await prisma.subforum.create({
+    data: {
       name: "General Discussion",
       description: "A place for general university discussions.",
       isApproved: true,
@@ -66,9 +65,7 @@ async function main() {
     },
   });
 
-  // 4. Create Posts (Clear existing dummy posts first to prevent endless duplicates on re-runs)
-  await prisma.post.deleteMany();
-
+  // 4. Create Posts
   const post = await prisma.post.create({
     data: {
       title: "Welcome to the JU Forum!",
@@ -79,8 +76,6 @@ async function main() {
   });
 
   // 5. Create an Announcement
-  await prisma.announcement.deleteMany();
-
   await prisma.announcement.create({
     data: {
       title: "Sprint 1 Launch",
@@ -92,8 +87,6 @@ async function main() {
   });
 
   // 6. Create a Vote
-  await prisma.postVote.deleteMany();
-
   await prisma.postVote.create({
     data: {
       userId: student1.id,

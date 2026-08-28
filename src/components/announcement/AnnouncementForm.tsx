@@ -16,25 +16,25 @@ export function AnnouncementForm({
   return (
     <form
       action={formAction}
-      className="flex w-full max-w-xl flex-col gap-4 rounded-xl border p-6"
+      className="flex w-full max-w-3xl flex-col gap-4 rounded-lg border border-sky-100 bg-white p-6 shadow-sm"
     >
       <input
         required
         name="title"
         placeholder="Announcement title"
-        className="rounded border px-3 py-2"
+        className="rounded-md border border-slate-200 px-3 py-2.5"
       />
       <textarea
         required
         name="content"
         rows={8}
         placeholder="Announcement content"
-        className="rounded border px-3 py-2"
+        className="rounded-md border border-slate-200 px-3 py-2.5"
       />
       <select
         name="priority"
         defaultValue="MEDIUM"
-        className="rounded border px-3 py-2"
+        className="rounded-md border border-slate-200 px-3 py-2.5"
       >
         <option value="LOW">Low priority</option>
         <option value="MEDIUM">Medium priority</option>
@@ -44,7 +44,7 @@ export function AnnouncementForm({
       <select
         name="targetAudience"
         defaultValue="ALL"
-        className="rounded border px-3 py-2"
+        className="rounded-md border border-slate-200 px-3 py-2.5"
       >
         <option value="ALL">All users</option>
         <option value="STUDENTS">Students</option>
@@ -56,7 +56,7 @@ export function AnnouncementForm({
         <input
           type="datetime-local"
           name="expiresAt"
-          className="mt-1 block w-full rounded border px-3 py-2"
+          className="mt-1 block w-full rounded-md border border-slate-200 px-3 py-2.5"
         />
       </label>
       {state?.message && (
@@ -65,7 +65,7 @@ export function AnnouncementForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+        className="rounded-md bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2.5 font-medium text-white hover:opacity-90 disabled:opacity-50"
       >
         {pending ? "Publishing…" : "Publish announcement"}
       </button>
