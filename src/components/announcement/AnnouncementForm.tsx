@@ -3,7 +3,12 @@
 import { useActionState } from "react";
 import type { ActionResult } from "@/types/result";
 
-/** Renders the announcement creation form. */
+/**
+ * Renders the announcement creation form.
+ *
+ * @param props - The announcement Server Action invoked on submission.
+ * @returns A client form for content, priority, audience, and optional expiry.
+ */
 export function AnnouncementForm({
   action,
 }: {
