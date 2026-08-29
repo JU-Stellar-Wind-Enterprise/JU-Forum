@@ -5,7 +5,14 @@ import { getCurrentUser } from "@/lib/session";
 import * as subforumService from "@/services/subforum.service";
 import type { ActionResult } from "@/types/result";
 
-/** Creates a subforum from form data for the current authenticated user. */
+/**
+ * Creates an auto-approved subforum for the current active user.
+ *
+ * @param _ - The previous action state supplied by React. It is unused.
+ * @param formData - Form data containing the proposed name and description.
+ * @returns A validation or authorization result when creation does not redirect.
+ * @throws A Next.js redirect signal after the subforum is created successfully.
+ */
 export async function createSubforumAction(
   _: ActionResult | undefined,
   formData: FormData,

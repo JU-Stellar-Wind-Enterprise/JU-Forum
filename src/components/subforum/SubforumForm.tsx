@@ -3,7 +3,12 @@
 import { useActionState } from "react";
 import type { ActionResult } from "@/types/result";
 
-/** Renders the form used to create a subforum. */
+/**
+ * Renders the form used to create a subforum.
+ *
+ * @param props - The subforum Server Action invoked with the submitted form data.
+ * @returns A client form with validation feedback and pending submission state.
+ */
 export function SubforumForm({
   action,
 }: {
