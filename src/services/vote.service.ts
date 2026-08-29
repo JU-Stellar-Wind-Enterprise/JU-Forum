@@ -3,7 +3,13 @@ import { findPostById } from "@/repositories/post.repository";
 import * as votes from "@/repositories/vote.repository";
 import type { ActionResult } from "@/types/result";
 
-/** Applies create, undo, or switch semantics to a user's post vote. */
+/**
+ * Applies create, undo, or switch semantics to a user's post vote.
+ *
+ * @param input - The post ID, voting user ID, and requested vote type.
+ * @returns A success result, or an error when the post cannot be voted on.
+ * @throws If an unexpected vote or post repository operation fails.
+ */
 export async function voteOnPost(input: {
   postId: string;
   userId: string;
@@ -21,6 +27,13 @@ export async function voteOnPost(input: {
   return { success: true };
 }
 
-/** Gets display totals and the user's selected vote. */
+/**
+ * Gets the vote totals and current user's selected vote for a post.
+ *
+ * @param postId - The post whose votes should be summarized.
+ * @param userId - The viewer whose current vote should be included.
+ * @returns Upvote and downvote totals together with the viewer's current vote.
+ * @throws If the database queries fail.
+ */
 export const getVoteSummary = (postId: string, userId: string) =>
   votes.getVoteSummary(postId, userId);
