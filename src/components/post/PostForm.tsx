@@ -5,7 +5,12 @@ import type { ActionResult } from "@/types/result";
 
 type SubforumOption = { id: string; name: string };
 
-/** Renders the authenticated post creation form. */
+/**
+ * Renders the authenticated post creation form.
+ *
+ * @param props - The post action, selectable subforums, and optional default selection.
+ * @returns A client form for selecting a subforum and composing a post.
+ */
 export function PostForm({
   action,
   subforums,

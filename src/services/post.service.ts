@@ -2,7 +2,13 @@ import * as posts from "@/repositories/post.repository";
 import { findSubforumById } from "@/repositories/subforum.repository";
 import type { ActionResult } from "@/types/result";
 
-/** Validates and creates a post using the authenticated user as its author. */
+/**
+ * Validates and creates a post using the authenticated user as its author.
+ *
+ * @param input - The post fields together with the author and destination subforum IDs.
+ * @returns A result containing the new post ID, or a user-facing validation error.
+ * @throws If an unexpected repository or database operation fails.
+ */
 export async function createPost(input: {
   title: string;
   content: string;
@@ -23,5 +29,11 @@ export async function createPost(input: {
   return { success: true, data: { id: post.id } };
 }
 
-/** Retrieves a post for its detail page. */
+/**
+ * Retrieves a post and its public author and subforum details.
+ *
+ * @param id - The unique ID of the post to retrieve.
+ * @returns The matching post, or `null` when no post has that ID.
+ * @throws If the database query fails.
+ */
 export const findPostById = (id: string) => posts.findPostById(id);

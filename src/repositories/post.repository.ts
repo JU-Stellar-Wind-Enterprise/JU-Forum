@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/prisma";
 
-/** Creates a post in a subforum for an authenticated author. */
+/**
+ * Creates a post in a subforum for an authenticated author.
+ *
+ * @param data - The post content together with its author and subforum IDs.
+ * @returns The newly created post record.
+ * @throws If a related record is missing or the database write fails.
+ */
 export const createPost = (data: {
   title: string;
   content: string;
@@ -8,7 +14,13 @@ export const createPost = (data: {
   subforumId: string;
 }) => prisma.post.create({ data });
 
-/** Finds a post with the public author and subforum details needed by its page. */
+/**
+ * Finds a post with the public author and subforum details needed by its page.
+ *
+ * @param id - The unique ID of the post to retrieve.
+ * @returns The matching post with related display data, or `null`.
+ * @throws If the database query fails.
+ */
 export const findPostById = (id: string) =>
   prisma.post.findUnique({
     where: { id },
@@ -18,7 +30,13 @@ export const findPostById = (id: string) =>
     },
   });
 
-/** Lists posts in a subforum from newest to oldest. */
+/**
+ * Lists posts in a subforum from newest to oldest.
+ *
+ * @param subforumId - The unique ID of the containing subforum.
+ * @returns Matching posts with each author's public ID and name.
+ * @throws If the database query fails.
+ */
 export const listPostsBySubforum = (subforumId: string) =>
   prisma.post.findMany({
     where: { subforumId },
