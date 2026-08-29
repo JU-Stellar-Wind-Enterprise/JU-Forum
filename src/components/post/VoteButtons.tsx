@@ -1,7 +1,12 @@
 import { voteAction } from "@/actions/vote.actions";
 import type { VoteType } from "@/generated/prisma/client";
 
-/** Renders post vote controls and their current totals. */
+/**
+ * Renders post vote controls and their current totals.
+ *
+ * @param props - The post ID, vote totals, selected vote, and disabled state.
+ * @returns Upvote and downvote forms with accessible selected-state indicators.
+ */
 export function VoteButtons({
   postId,
   upvotes,
