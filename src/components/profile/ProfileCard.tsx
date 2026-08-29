@@ -13,7 +13,12 @@ type Profile = {
   createdAt: Date;
 };
 
-/** Displays the public fields of a university member profile. */
+/**
+ * Displays the public fields of a university member profile.
+ *
+ * @param props - The safe profile projection returned by the profile service.
+ * @returns A responsive profile card that marks missing optional values with a dash.
+ */
 export function ProfileCard({ profile }: { profile: Profile }) {
   return (
     <section className="w-full overflow-hidden rounded-lg border border-sky-100 bg-white shadow-sm">
