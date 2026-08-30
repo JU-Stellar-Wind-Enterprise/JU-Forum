@@ -111,7 +111,12 @@ export function LoginForm({ action }: { action: AuthAction }) {
     </AuthForm>
   );
 }
-/** Renders the six-digit signup OTP verification form. */
+/**
+ * Renders the six-digit signup OTP verification form.
+ *
+ * @param props - The verification action and pending account email.
+ * @returns A form that submits the email and entered OTP for verification.
+ */
 export function OtpForm({
   action,
   email,
@@ -127,7 +132,12 @@ export function OtpForm({
   );
 }
 
-/** Renders the inline action used to resend an expired or missing OTP. */
+/**
+ * Renders the inline action used to resend an expired or missing OTP.
+ *
+ * @param props - The resend action and email belonging to the pending account.
+ * @returns An inline resend control with pending, success, and error feedback.
+ */
 export function ResendOtpForm({
   action,
   email,
