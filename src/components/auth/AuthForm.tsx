@@ -5,7 +5,12 @@ import type { ReactNode } from "react";
 import { useActionState } from "react";
 import type { AuthAction, AuthResult } from "@/types/auth";
 
-/** Renders shared authentication form layout and submission state. */
+/**
+ * Renders the shared authentication form layout and submission state.
+ *
+ * @param props - The Server Action, form fields, and submit-button label.
+ * @returns A client-rendered authentication form with feedback and pending state.
+ */
 export function AuthForm({
   action,
   children,
@@ -64,7 +69,12 @@ const Field = ({
     className="rounded border px-3 py-2"
   />
 );
-/** Renders the public JU account signup form. */
+/**
+ * Renders the public JU account signup form.
+ *
+ * @param props - The signup Server Action used when the form is submitted.
+ * @returns A form for collecting identity, role, email, and password details.
+ */
 export function SignupForm({ action }: { action: AuthAction }) {
   return (
     <AuthForm action={action} button="Create account">
@@ -87,7 +97,12 @@ export function SignupForm({ action }: { action: AuthAction }) {
     </AuthForm>
   );
 }
-/** Renders the email and password login form. */
+/**
+ * Renders the email and password login form.
+ *
+ * @param props - The login Server Action used when the form is submitted.
+ * @returns A form for collecting an existing user's credentials.
+ */
 export function LoginForm({ action }: { action: AuthAction }) {
   return (
     <AuthForm action={action} button="Log in">
