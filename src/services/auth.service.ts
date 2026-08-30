@@ -21,7 +21,13 @@ const safe = (u: {
   status: u.status,
 });
 
-/** Registers a pending JU account and sends its initial email OTP. */
+/**
+ * Registers a pending JU account and sends its initial email OTP.
+ *
+ * @param input - The user's name, JU email, plain-text password, and public role.
+ * @returns A success result with the normalized email, or a user-facing error result.
+ * @throws If an unexpected password-hashing or database operation fails.
+ */
 export async function signup(input: {
   name: string;
   email: string;
@@ -61,7 +67,14 @@ export async function signup(input: {
   return { success: true, email: user.email };
 }
 
-/** Activates a pending account when its unexpired OTP matches. */
+/**
+ * Activates a pending account when its unexpired OTP matches.
+ *
+ * @param emailInput - The account email; surrounding whitespace and case are normalized.
+ * @param code - The six-digit one-time password submitted by the user.
+ * @returns A success result after session creation, or an invalid/expired OTP result.
+ * @throws If the database cannot update the user or the session cookie cannot be set.
+ */
 export async function verifyOtp(emailInput: string, code: string) {
   const user = await users.findByEmail(normalize(emailInput));
   if (
@@ -77,7 +90,13 @@ export async function verifyOtp(emailInput: string, code: string) {
   return { success: true };
 }
 
-/** Replaces and emails the OTP for an account awaiting verification. */
+/**
+ * Replaces and emails the OTP for an account awaiting verification.
+ *
+ * @param emailInput - The pending account email to normalize and look up.
+ * @returns A success result, or a result stating that no pending signup exists.
+ * @throws If updating the OTP or sending the email fails.
+ */
 export async function resendOtp(emailInput: string) {
   const user = await users.findByEmail(normalize(emailInput));
   if (!user || user.status !== "OTP_PENDING")
@@ -88,7 +107,14 @@ export async function resendOtp(emailInput: string) {
   return { success: true };
 }
 
-/** Authenticates an active account and creates its signed session cookie. */
+/**
+ * Authenticates an active account and creates its signed session cookie.
+ *
+ * @param emailInput - The account email to normalize before lookup.
+ * @param password - The plain-text password to compare with the stored hash.
+ * @returns A success result, or a user-facing authentication or lockout result.
+ * @throws If password comparison, database updates, or session creation unexpectedly fail.
+ */
 export async function login(emailInput: string, password: string) {
   const user = await users.findByEmail(normalize(emailInput));
   if (!user || user.isDeleted) return { message: "Invalid email or password." };
