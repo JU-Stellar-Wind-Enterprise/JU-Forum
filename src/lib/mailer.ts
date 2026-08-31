@@ -1,6 +1,13 @@
 import nodemailer from "nodemailer";
 
-/** Sends a ten-minute verification code through the configured Gmail account. */
+/**
+ * Sends a verification code through the configured Gmail SMTP account.
+ *
+ * @param email - The recipient's JU email address.
+ * @param code - The one-time password that expires after ten minutes.
+ * @returns A promise that resolves after Gmail accepts the message for delivery.
+ * @throws If SMTP credentials are missing or Gmail rejects the message.
+ */
 export async function sendOtpEmail(email: string, code: string) {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_APP_PASSWORD;

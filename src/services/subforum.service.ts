@@ -1,7 +1,13 @@
 import * as subforums from "@/repositories/subforum.repository";
 import type { ActionResult } from "@/types/result";
 
-/** Creates an auto-approved subforum for an authenticated user. */
+/**
+ * Validates and creates an auto-approved subforum for an authenticated user.
+ *
+ * @param input - The proposed name, description, and authenticated owner ID.
+ * @returns A result containing the new subforum ID, or a validation error.
+ * @throws If an unexpected repository or database operation fails.
+ */
 export async function createSubforum(input: {
   name: string;
   description: string;
@@ -25,5 +31,10 @@ export async function createSubforum(input: {
   return { success: true, data: { id: created.id } };
 }
 
-/** Lists subforums available for browsing and post creation. */
+/**
+ * Lists approved subforums available for browsing and post creation.
+ *
+ * @returns Approved subforums ordered from newest to oldest with owner details.
+ * @throws If the database query fails.
+ */
 export const listSubforums = () => subforums.listSubforums();

@@ -8,7 +8,13 @@ const secret = () => process.env.SESSION_SECRET || "development-only-secret";
 const sign = (value: string) =>
   createHmac("sha256", secret()).update(value).digest("base64url");
 
-/** Creates a signed, HTTP-only, seven-day session cookie for a safe user. */
+/**
+ * Creates a signed, HTTP-only session cookie that remains valid for seven days.
+ *
+ * @param user - The safe user projection whose ID identifies the session owner.
+ * @returns A promise that resolves after the cookie has been written.
+ * @throws If cookie access fails in the current request context.
+ */
 export async function createSession(user: SafeUser) {
   const value = `${user.id}.${Date.now() + 7 * 24 * 60 * 60 * 1000}`;
   (await cookies()).set(COOKIE, `${value}.${sign(value)}`, {
@@ -20,12 +26,22 @@ export async function createSession(user: SafeUser) {
   });
 }
 
-/** Removes the current browser session cookie. */
+/**
+ * Removes the current browser session cookie.
+ *
+ * @returns A promise that resolves after the cookie has been deleted.
+ * @throws If cookie access fails in the current request context.
+ */
 export async function destroySession() {
   (await cookies()).delete(COOKIE);
 }
 
-/** Verifies the session cookie and returns the current user's safe fields. */
+/**
+ * Verifies the signed session cookie and loads the current safe user projection.
+ *
+ * @returns The current user when the session is valid, or `null` otherwise.
+ * @throws If the database lookup or cookie access unexpectedly fails.
+ */
 export async function getCurrentUser() {
   const raw = (await cookies()).get(COOKIE)?.value;
   if (!raw) return null;
