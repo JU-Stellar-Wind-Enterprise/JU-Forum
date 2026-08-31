@@ -397,5 +397,85 @@ describe("auth.service", () => {
         });
       });
     });
+    // ==========================================================
+    // 6. RESEND OTP TESTS
+    // Total: 3 tests
+    // ==========================================================
+
+    describe("resendOtp", () => {
+      // --------------------------------------------------------
+      // RESEND OTP TEST 1
+      // User does not exist
+      // --------------------------------------------------------
+
+      it("returns error if user is not found", async () => {
+        vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
+
+        const res = await resendOtp("missing@juniv.edu");
+
+        expect(res).toEqual({
+          message: "No pending signup was found.",
+        });
+
+        expect(usersRepo.updateOtp).not.toHaveBeenCalled();
+      });
+
+      // --------------------------------------------------------
+      // RESEND OTP TEST 2
+      // User is not OTP_PENDING
+      // --------------------------------------------------------
+
+      it("returns error if user is not OTP_PENDING", async () => {
+        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+          id: "u-1",
+          email: "active@juniv.edu",
+          status: "ACTIVE" as AccountStatus,
+        } as unknown as User);
+
+        const res = await resendOtp("active@juniv.edu");
+
+        expect(res).toEqual({
+          message: "No pending signup was found.",
+        });
+
+        expect(usersRepo.updateOtp).not.toHaveBeenCalled();
+      });
+
+      // --------------------------------------------------------
+      // RESEND OTP TEST 3
+      // Valid pending user receives a new OTP
+      // --------------------------------------------------------
+
+      it("updates OTP and sends email for valid pending user", async () => {
+        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+          id: "u-1",
+          email: "pending@juniv.edu",
+          status: "OTP_PENDING" as AccountStatus,
+        } as unknown as User);
+
+        vi.mocked(usersRepo.updateOtp).mockResolvedValue({} as unknown as User);
+
+        vi.mocked(sendOtpEmail).mockResolvedValue(undefined);
+
+        const res = await resendOtp(" PENDING@juniv.edu ");
+
+        expect(usersRepo.findByEmail).toHaveBeenCalledWith("pending@juniv.edu");
+
+        expect(usersRepo.updateOtp).toHaveBeenCalledWith(
+          "u-1",
+          expect.stringMatching(/^\d{6}$/),
+          expect.any(Date),
+        );
+
+        expect(sendOtpEmail).toHaveBeenCalledWith(
+          "pending@juniv.edu",
+          expect.stringMatching(/^\d{6}$/),
+        );
+
+        expect(res).toEqual({
+          success: true,
+        });
+      });
+    });
   });
 });
