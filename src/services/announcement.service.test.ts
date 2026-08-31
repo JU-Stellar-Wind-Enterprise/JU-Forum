@@ -285,15 +285,7 @@ describe("announcement.service", () => {
       expect(res).toEqual(mockList);
     });
   });
-
-  describe("findAnnouncementById", () => {
-    it("delegates to repository and returns matching announcement", async () => {
-      const mockAnnouncement = {
-        id: "ann-1",
-        title: "Found Announcement",
-        content: "Details",
-      };
-      vi.mocked(announcementRepo.findAnnouncementById).mockResolvedValue(
+cked(announcementRepo.findAnnouncementById).mockResolvedValue(
         mockAnnouncement as unknown as AnnouncementRecord,
       );
 
