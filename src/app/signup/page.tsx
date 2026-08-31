@@ -1,18 +1,6 @@
 import Link from "next/link";
 import { signupAction } from "@/actions/auth.actions";
 import { SignupForm } from "@/components/auth/AuthForm";
-
-/**
- * Signup page for JU Forum.
- *
- * Displays the registration interface for new users.
- * The page uses the reusable SignupForm component and
- * passes the signupAction to handle form submission.
- *
- * Users who already have an account can navigate to
- * the login page using the provided link.
- */
-
 export default function SignupPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6">
