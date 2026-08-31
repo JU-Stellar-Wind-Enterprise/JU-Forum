@@ -17,7 +17,7 @@ import { login, resendOtp, signup, verifyOtp } from "./auth.service";
 // 2. MOCKS
 // ============================================================
 
-// Mock bcrypt
+// Mock bcrypt password hashing and comparison
 vi.mock("bcryptjs", () => ({
   default: {
     hash: vi.fn(),
@@ -25,17 +25,17 @@ vi.mock("bcryptjs", () => ({
   },
 }));
 
-// Mock mailer
+// Mock OTP email sender
 vi.mock("@/lib/mailer", () => ({
   sendOtpEmail: vi.fn(),
 }));
 
-// Mock session
+// Mock session creation
 vi.mock("@/lib/session", () => ({
   createSession: vi.fn(),
 }));
 
-// Mock user repository
+// Mock user repository methods
 vi.mock("@/repositories/user.repository", () => ({
   findByEmail: vi.fn(),
   createPending: vi.fn(),
@@ -53,6 +53,11 @@ describe("auth.service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
+  // ==========================================================
+  // 4. SIGNUP TESTS
+  // Total: 7 tests
+  // ==========================================================
 
   describe("signup", () => {
     // --------------------------------------------------------
@@ -94,6 +99,7 @@ describe("auth.service", () => {
 
       expect(usersRepo.findByEmail).not.toHaveBeenCalled();
     });
+
     // --------------------------------------------------------
     // SIGNUP TEST 3
     // Name is empty or contains only spaces
@@ -113,6 +119,7 @@ describe("auth.service", () => {
 
       expect(usersRepo.findByEmail).not.toHaveBeenCalled();
     });
+
     // --------------------------------------------------------
     // SIGNUP TEST 4
     // Account already exists with OTP_PENDING status
@@ -259,260 +266,268 @@ describe("auth.service", () => {
 
       consoleSpy.mockRestore();
     });
-    // ==========================================================
-    // 5. VERIFY OTP TESTS
-    // Total: 5 tests
-    // ==========================================================
+  });
 
-    describe("verifyOtp", () => {
-      // --------------------------------------------------------
-      // VERIFY OTP TEST 1
-      // User does not exist
-      // --------------------------------------------------------
+  // ==========================================================
+  // 5. VERIFY OTP TESTS
+  // Total: 5 tests
+  // ==========================================================
 
-      it("returns error if user is not found", async () => {
-        vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
+  describe("verifyOtp", () => {
+    // --------------------------------------------------------
+    // VERIFY OTP TEST 1
+    // User does not exist
+    // --------------------------------------------------------
 
-        const res = await verifyOtp("nobody@juniv.edu", "123456");
+    it("returns error if user is not found", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
 
-        expect(res).toEqual({
-          message: "Invalid or expired OTP.",
-        });
+      const res = await verifyOtp("nobody@juniv.edu", "123456");
 
-        expect(usersRepo.activate).not.toHaveBeenCalled();
+      expect(res).toEqual({
+        message: "Invalid or expired OTP.",
       });
 
-      // --------------------------------------------------------
-      // VERIFY OTP TEST 2
-      // User status is not OTP_PENDING
-      // --------------------------------------------------------
-
-      it("returns error if user status is not OTP_PENDING", async () => {
-        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
-          id: "u-1",
-          email: "user@juniv.edu",
-          status: "ACTIVE" as AccountStatus,
-          otpCode: "123456",
-          otpExpiresAt: new Date(Date.now() + 60_000),
-        } as unknown as User);
-
-        const res = await verifyOtp("user@juniv.edu", "123456");
-
-        expect(res).toEqual({
-          message: "Invalid or expired OTP.",
-        });
-
-        expect(usersRepo.activate).not.toHaveBeenCalled();
-      });
-
-      // --------------------------------------------------------
-      // VERIFY OTP TEST 3
-      // OTP code does not match
-      // --------------------------------------------------------
-
-      it("returns error if OTP code does not match", async () => {
-        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
-          id: "u-1",
-          email: "user@juniv.edu",
-          status: "OTP_PENDING" as AccountStatus,
-          otpCode: "123456",
-          otpExpiresAt: new Date(Date.now() + 60_000),
-        } as unknown as User);
-
-        const res = await verifyOtp("user@juniv.edu", "654321");
-
-        expect(res).toEqual({
-          message: "Invalid or expired OTP.",
-        });
-
-        expect(usersRepo.activate).not.toHaveBeenCalled();
-      });
-
-      // --------------------------------------------------------
-      // VERIFY OTP TEST 4
-      // OTP has expired
-      // --------------------------------------------------------
-
-      it("returns error if OTP is expired", async () => {
-        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
-          id: "u-1",
-          email: "user@juniv.edu",
-          status: "OTP_PENDING" as AccountStatus,
-          otpCode: "123456",
-          otpExpiresAt: new Date(Date.now() - 1000),
-        } as unknown as User);
-
-        const res = await verifyOtp("user@juniv.edu", "123456");
-
-        expect(res).toEqual({
-          message: "Invalid or expired OTP.",
-        });
-
-        expect(usersRepo.activate).not.toHaveBeenCalled();
-      });
-
-      // --------------------------------------------------------
-      // VERIFY OTP TEST 5
-      // Valid OTP
-      // User is activated and session is created
-      // --------------------------------------------------------
-
-      it("activates user, creates session, and returns success for valid OTP", async () => {
-        const activeUser = {
-          id: "u-1",
-          name: "User One",
-          email: "user@juniv.edu",
-          role: "STUDENT" as UserRole,
-          status: "ACTIVE" as AccountStatus,
-        };
-
-        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
-          id: "u-1",
-          email: "user@juniv.edu",
-          status: "OTP_PENDING" as AccountStatus,
-          otpCode: "123456",
-          otpExpiresAt: new Date(Date.now() + 60_000),
-        } as unknown as User);
-
-        vi.mocked(usersRepo.activate).mockResolvedValue(
-          activeUser as unknown as User,
-        );
-
-        const res = await verifyOtp(" USER@JUNIV.EDU ", "123456");
-
-        expect(usersRepo.findByEmail).toHaveBeenCalledWith("user@juniv.edu");
-
-        expect(usersRepo.activate).toHaveBeenCalledWith("u-1");
-
-        expect(createSession).toHaveBeenCalledWith({
-          id: "u-1",
-          name: "User One",
-          email: "user@juniv.edu",
-          role: "STUDENT",
-          status: "ACTIVE",
-        });
-
-        expect(res).toEqual({
-          success: true,
-        });
-      });
-    });
-    // ==========================================================
-    // 6. RESEND OTP TESTS
-    // Total: 3 tests
-    // ==========================================================
-
-    describe("resendOtp", () => {
-      // --------------------------------------------------------
-      // RESEND OTP TEST 1
-      // User does not exist
-      // --------------------------------------------------------
-
-      it("returns error if user is not found", async () => {
-        vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
-
-        const res = await resendOtp("missing@juniv.edu");
-
-        expect(res).toEqual({
-          message: "No pending signup was found.",
-        });
-
-        expect(usersRepo.updateOtp).not.toHaveBeenCalled();
-      });
-
-      // --------------------------------------------------------
-      // RESEND OTP TEST 2
-      // User is not OTP_PENDING
-      // --------------------------------------------------------
-
-      it("returns error if user is not OTP_PENDING", async () => {
-        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
-          id: "u-1",
-          email: "active@juniv.edu",
-          status: "ACTIVE" as AccountStatus,
-        } as unknown as User);
-
-        const res = await resendOtp("active@juniv.edu");
-
-        expect(res).toEqual({
-          message: "No pending signup was found.",
-        });
-
-        expect(usersRepo.updateOtp).not.toHaveBeenCalled();
-      });
-
-      // --------------------------------------------------------
-      // RESEND OTP TEST 3
-      // Valid pending user receives a new OTP
-      // --------------------------------------------------------
-
-      it("updates OTP and sends email for valid pending user", async () => {
-        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
-          id: "u-1",
-          email: "pending@juniv.edu",
-          status: "OTP_PENDING" as AccountStatus,
-        } as unknown as User);
-
-        vi.mocked(usersRepo.updateOtp).mockResolvedValue({} as unknown as User);
-
-        vi.mocked(sendOtpEmail).mockResolvedValue(undefined);
-
-        const res = await resendOtp(" PENDING@juniv.edu ");
-
-        expect(usersRepo.findByEmail).toHaveBeenCalledWith("pending@juniv.edu");
-
-        expect(usersRepo.updateOtp).toHaveBeenCalledWith(
-          "u-1",
-          expect.stringMatching(/^\d{6}$/),
-          expect.any(Date),
-        );
-
-        expect(sendOtpEmail).toHaveBeenCalledWith(
-          "pending@juniv.edu",
-          expect.stringMatching(/^\d{6}$/),
-        );
-
-        expect(res).toEqual({
-          success: true,
-        });
-      });
+      expect(usersRepo.activate).not.toHaveBeenCalled();
     });
 
-    describe("login", () => {
-      // --------------------------------------------------------
-      // LOGIN TEST 1
-      // User does not exist
-      // --------------------------------------------------------
+    // --------------------------------------------------------
+    // VERIFY OTP TEST 2
+    // User status is not OTP_PENDING
+    // --------------------------------------------------------
 
-      it("returns invalid credentials if user is not found", async () => {
-        vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
+    it("returns error if user status is not OTP_PENDING", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "user@juniv.edu",
+        status: "ACTIVE" as AccountStatus,
+        otpCode: "123456",
+        otpExpiresAt: new Date(Date.now() + 60_000),
+      } as unknown as User);
 
-        const res = await login("missing@juniv.edu", "pass123");
+      const res = await verifyOtp("user@juniv.edu", "123456");
 
-        expect(res).toEqual({
-          message: "Invalid email or password.",
-        });
+      expect(res).toEqual({
+        message: "Invalid or expired OTP.",
       });
 
-      // --------------------------------------------------------
-      // LOGIN TEST 2
-      // User account is soft-deleted
-      // --------------------------------------------------------
+      expect(usersRepo.activate).not.toHaveBeenCalled();
+    });
 
-      it("returns invalid credentials if user is soft-deleted", async () => {
-        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
-          id: "u-1",
-          email: "deleted@juniv.edu",
-          isDeleted: true,
-        } as unknown as User);
+    // --------------------------------------------------------
+    // VERIFY OTP TEST 3
+    // OTP code does not match
+    // --------------------------------------------------------
 
-        const res = await login("deleted@juniv.edu", "pass123");
+    it("returns error if OTP code does not match", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "user@juniv.edu",
+        status: "OTP_PENDING" as AccountStatus,
+        otpCode: "123456",
+        otpExpiresAt: new Date(Date.now() + 60_000),
+      } as unknown as User);
 
-        expect(res).toEqual({
-          message: "Invalid email or password.",
-        });
+      const res = await verifyOtp("user@juniv.edu", "654321");
+
+      expect(res).toEqual({
+        message: "Invalid or expired OTP.",
+      });
+
+      expect(usersRepo.activate).not.toHaveBeenCalled();
+    });
+
+    // --------------------------------------------------------
+    // VERIFY OTP TEST 4
+    // OTP has expired
+    // --------------------------------------------------------
+
+    it("returns error if OTP is expired", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "user@juniv.edu",
+        status: "OTP_PENDING" as AccountStatus,
+        otpCode: "123456",
+        otpExpiresAt: new Date(Date.now() - 1000),
+      } as unknown as User);
+
+      const res = await verifyOtp("user@juniv.edu", "123456");
+
+      expect(res).toEqual({
+        message: "Invalid or expired OTP.",
+      });
+
+      expect(usersRepo.activate).not.toHaveBeenCalled();
+    });
+
+    // --------------------------------------------------------
+    // VERIFY OTP TEST 5
+    // Valid OTP
+    // User is activated and session is created
+    // --------------------------------------------------------
+
+    it("activates user, creates session, and returns success for valid OTP", async () => {
+      const activeUser = {
+        id: "u-1",
+        name: "User One",
+        email: "user@juniv.edu",
+        role: "STUDENT" as UserRole,
+        status: "ACTIVE" as AccountStatus,
+      };
+
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "user@juniv.edu",
+        status: "OTP_PENDING" as AccountStatus,
+        otpCode: "123456",
+        otpExpiresAt: new Date(Date.now() + 60_000),
+      } as unknown as User);
+
+      vi.mocked(usersRepo.activate).mockResolvedValue(
+        activeUser as unknown as User,
+      );
+
+      const res = await verifyOtp(" USER@JUNIV.EDU ", "123456");
+
+      expect(usersRepo.findByEmail).toHaveBeenCalledWith("user@juniv.edu");
+
+      expect(usersRepo.activate).toHaveBeenCalledWith("u-1");
+
+      expect(createSession).toHaveBeenCalledWith({
+        id: "u-1",
+        name: "User One",
+        email: "user@juniv.edu",
+        role: "STUDENT",
+        status: "ACTIVE",
+      });
+
+      expect(res).toEqual({
+        success: true,
       });
     });
+  });
+
+  // ==========================================================
+  // 6. RESEND OTP TESTS
+  // Total: 3 tests
+  // ==========================================================
+
+  describe("resendOtp", () => {
+    // --------------------------------------------------------
+    // RESEND OTP TEST 1
+    // User does not exist
+    // --------------------------------------------------------
+
+    it("returns error if user is not found", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
+
+      const res = await resendOtp("missing@juniv.edu");
+
+      expect(res).toEqual({
+        message: "No pending signup was found.",
+      });
+
+      expect(usersRepo.updateOtp).not.toHaveBeenCalled();
+    });
+
+    // --------------------------------------------------------
+    // RESEND OTP TEST 2
+    // User is not OTP_PENDING
+    // --------------------------------------------------------
+
+    it("returns error if user is not OTP_PENDING", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "active@juniv.edu",
+        status: "ACTIVE" as AccountStatus,
+      } as unknown as User);
+
+      const res = await resendOtp("active@juniv.edu");
+
+      expect(res).toEqual({
+        message: "No pending signup was found.",
+      });
+
+      expect(usersRepo.updateOtp).not.toHaveBeenCalled();
+    });
+
+    // --------------------------------------------------------
+    // RESEND OTP TEST 3
+    // Valid pending user receives a new OTP
+    // --------------------------------------------------------
+
+    it("updates OTP and sends email for valid pending user", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "pending@juniv.edu",
+        status: "OTP_PENDING" as AccountStatus,
+      } as unknown as User);
+
+      vi.mocked(usersRepo.updateOtp).mockResolvedValue({} as unknown as User);
+
+      vi.mocked(sendOtpEmail).mockResolvedValue(undefined);
+
+      const res = await resendOtp(" PENDING@juniv.edu ");
+
+      expect(usersRepo.findByEmail).toHaveBeenCalledWith("pending@juniv.edu");
+
+      expect(usersRepo.updateOtp).toHaveBeenCalledWith(
+        "u-1",
+        expect.stringMatching(/^\d{6}$/),
+        expect.any(Date),
+      );
+
+      expect(sendOtpEmail).toHaveBeenCalledWith(
+        "pending@juniv.edu",
+        expect.stringMatching(/^\d{6}$/),
+      );
+
+      expect(res).toEqual({
+        success: true,
+      });
+    });
+  });
+
+  // ==========================================================
+  // 7. LOGIN TESTS
+  // Total: 8 tests
+  // ==========================================================
+
+  describe("login", () => {
+    // --------------------------------------------------------
+    // LOGIN TEST 1
+    // User does not exist
+    // --------------------------------------------------------
+
+    it("returns invalid credentials if user is not found", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
+
+      const res = await login("missing@juniv.edu", "pass123");
+
+      expect(res).toEqual({
+        message: "Invalid email or password.",
+      });
+    });
+
+    // --------------------------------------------------------
+    // LOGIN TEST 2
+    // User account is soft-deleted
+    // --------------------------------------------------------
+
+    it("returns invalid credentials if user is soft-deleted", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "deleted@juniv.edu",
+        isDeleted: true,
+      } as unknown as User);
+
+      const res = await login("deleted@juniv.edu", "pass123");
+
+      expect(res).toEqual({
+        message: "Invalid email or password.",
+      });
+    });
+
     // --------------------------------------------------------
     // LOGIN TEST 3
     // Account is currently locked
@@ -584,6 +599,7 @@ describe("auth.service", () => {
 
       expect(bcrypt.compare).not.toHaveBeenCalled();
     });
+
     // --------------------------------------------------------
     // LOGIN TEST 6
     // Wrong password with fewer than 5 failed attempts
@@ -643,7 +659,8 @@ describe("auth.service", () => {
 
     // --------------------------------------------------------
     // LOGIN TEST 8
-    // Successful login with correct password
+    // Successful login with valid credentials
+    // Failed attempts are reset and session is created
     // --------------------------------------------------------
 
     it("resets failedLoginAttempts, creates session, and returns success on valid credentials", async () => {
@@ -685,4 +702,4 @@ describe("auth.service", () => {
       });
     });
   });
-});
+}); // END OF MAIN TEST SUITE
