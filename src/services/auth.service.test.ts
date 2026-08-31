@@ -113,5 +113,59 @@ describe("auth.service", () => {
 
       expect(usersRepo.findByEmail).not.toHaveBeenCalled();
     });
+    // --------------------------------------------------------
+    // SIGNUP TEST 4
+    // Account already exists with OTP_PENDING status
+    // --------------------------------------------------------
+
+    it("returns awaiting verification message if account already exists with OTP_PENDING", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "pending@juniv.edu",
+        status: "OTP_PENDING" as AccountStatus,
+      } as unknown as User);
+
+      const res = await signup({
+        name: "Pending User",
+        email: "PENDING@juniv.edu",
+        password: "password123",
+        role: "STUDENT",
+      });
+
+      expect(usersRepo.findByEmail).toHaveBeenCalledWith("pending@juniv.edu");
+
+      expect(res).toEqual({
+        message: "This email is awaiting verification.",
+        email: "pending@juniv.edu",
+      });
+
+      expect(usersRepo.createPending).not.toHaveBeenCalled();
+    });
+
+    // --------------------------------------------------------
+    // SIGNUP TEST 5
+    // Account already exists with ACTIVE status
+    // --------------------------------------------------------
+
+    it("returns already exists message if account already exists with ACTIVE status", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-2",
+        email: "active@juniv.edu",
+        status: "ACTIVE" as AccountStatus,
+      } as unknown as User);
+
+      const res = await signup({
+        name: "Active User",
+        email: "active@juniv.edu",
+        password: "password123",
+        role: "STUDENT",
+      });
+
+      expect(res).toEqual({
+        message: "An account with this email already exists.",
+      });
+
+      expect(usersRepo.createPending).not.toHaveBeenCalled();
+    });
   });
 });
