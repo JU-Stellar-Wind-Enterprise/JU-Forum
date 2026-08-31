@@ -477,5 +477,41 @@ describe("auth.service", () => {
         });
       });
     });
+
+    describe("login", () => {
+      // --------------------------------------------------------
+      // LOGIN TEST 1
+      // User does not exist
+      // --------------------------------------------------------
+
+      it("returns invalid credentials if user is not found", async () => {
+        vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
+
+        const res = await login("missing@juniv.edu", "pass123");
+
+        expect(res).toEqual({
+          message: "Invalid email or password.",
+        });
+      });
+
+      // --------------------------------------------------------
+      // LOGIN TEST 2
+      // User account is soft-deleted
+      // --------------------------------------------------------
+
+      it("returns invalid credentials if user is soft-deleted", async () => {
+        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+          id: "u-1",
+          email: "deleted@juniv.edu",
+          isDeleted: true,
+        } as unknown as User);
+
+        const res = await login("deleted@juniv.edu", "pass123");
+
+        expect(res).toEqual({
+          message: "Invalid email or password.",
+        });
+      });
+    });
   });
 });
