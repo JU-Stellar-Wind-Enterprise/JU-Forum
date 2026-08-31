@@ -513,5 +513,76 @@ describe("auth.service", () => {
         });
       });
     });
+    // --------------------------------------------------------
+    // LOGIN TEST 3
+    // Account is currently locked
+    // --------------------------------------------------------
+
+    it("returns locked message if lockoutUntil is in future", async () => {
+      const lockoutTime = new Date(Date.now() + 10 * 60 * 1000);
+
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "locked@juniv.edu",
+        isDeleted: false,
+        lockoutUntil: lockoutTime,
+      } as unknown as User);
+
+      const res = await login("locked@juniv.edu", "pass123");
+
+      expect(res).toEqual({
+        message: `Account locked until ${lockoutTime.toLocaleTimeString()}.`,
+      });
+
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+    });
+
+    // --------------------------------------------------------
+    // LOGIN TEST 4
+    // User must verify OTP first
+    // --------------------------------------------------------
+
+    it("returns OTP verification required message if status is OTP_PENDING", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "pending@juniv.edu",
+        isDeleted: false,
+        lockoutUntil: null,
+        status: "OTP_PENDING" as AccountStatus,
+      } as unknown as User);
+
+      const res = await login("pending@juniv.edu", "pass123");
+
+      expect(res).toEqual({
+        message: "Verify your email OTP first to finish signing in.",
+        email: "pending@juniv.edu",
+      });
+
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+    });
+
+    // --------------------------------------------------------
+    // LOGIN TEST 5
+    // Account is suspended or inactive
+    // --------------------------------------------------------
+
+    it("returns account not active message if status is suspended or other non-ACTIVE", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "suspended@juniv.edu",
+        isDeleted: false,
+        lockoutUntil: null,
+        status: "SUSPENDED" as AccountStatus,
+      } as unknown as User);
+
+      const res = await login("suspended@juniv.edu", "pass123");
+
+      expect(res).toEqual({
+        message: "This account is not active.",
+        email: undefined,
+      });
+
+      expect(bcrypt.compare).not.toHaveBeenCalled();
+    });
   });
 });
