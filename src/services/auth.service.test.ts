@@ -259,5 +259,143 @@ describe("auth.service", () => {
 
       consoleSpy.mockRestore();
     });
+    // ==========================================================
+    // 5. VERIFY OTP TESTS
+    // Total: 5 tests
+    // ==========================================================
+
+    describe("verifyOtp", () => {
+      // --------------------------------------------------------
+      // VERIFY OTP TEST 1
+      // User does not exist
+      // --------------------------------------------------------
+
+      it("returns error if user is not found", async () => {
+        vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
+
+        const res = await verifyOtp("nobody@juniv.edu", "123456");
+
+        expect(res).toEqual({
+          message: "Invalid or expired OTP.",
+        });
+
+        expect(usersRepo.activate).not.toHaveBeenCalled();
+      });
+
+      // --------------------------------------------------------
+      // VERIFY OTP TEST 2
+      // User status is not OTP_PENDING
+      // --------------------------------------------------------
+
+      it("returns error if user status is not OTP_PENDING", async () => {
+        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+          id: "u-1",
+          email: "user@juniv.edu",
+          status: "ACTIVE" as AccountStatus,
+          otpCode: "123456",
+          otpExpiresAt: new Date(Date.now() + 60_000),
+        } as unknown as User);
+
+        const res = await verifyOtp("user@juniv.edu", "123456");
+
+        expect(res).toEqual({
+          message: "Invalid or expired OTP.",
+        });
+
+        expect(usersRepo.activate).not.toHaveBeenCalled();
+      });
+
+      // --------------------------------------------------------
+      // VERIFY OTP TEST 3
+      // OTP code does not match
+      // --------------------------------------------------------
+
+      it("returns error if OTP code does not match", async () => {
+        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+          id: "u-1",
+          email: "user@juniv.edu",
+          status: "OTP_PENDING" as AccountStatus,
+          otpCode: "123456",
+          otpExpiresAt: new Date(Date.now() + 60_000),
+        } as unknown as User);
+
+        const res = await verifyOtp("user@juniv.edu", "654321");
+
+        expect(res).toEqual({
+          message: "Invalid or expired OTP.",
+        });
+
+        expect(usersRepo.activate).not.toHaveBeenCalled();
+      });
+
+      // --------------------------------------------------------
+      // VERIFY OTP TEST 4
+      // OTP has expired
+      // --------------------------------------------------------
+
+      it("returns error if OTP is expired", async () => {
+        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+          id: "u-1",
+          email: "user@juniv.edu",
+          status: "OTP_PENDING" as AccountStatus,
+          otpCode: "123456",
+          otpExpiresAt: new Date(Date.now() - 1000),
+        } as unknown as User);
+
+        const res = await verifyOtp("user@juniv.edu", "123456");
+
+        expect(res).toEqual({
+          message: "Invalid or expired OTP.",
+        });
+
+        expect(usersRepo.activate).not.toHaveBeenCalled();
+      });
+
+      // --------------------------------------------------------
+      // VERIFY OTP TEST 5
+      // Valid OTP
+      // User is activated and session is created
+      // --------------------------------------------------------
+
+      it("activates user, creates session, and returns success for valid OTP", async () => {
+        const activeUser = {
+          id: "u-1",
+          name: "User One",
+          email: "user@juniv.edu",
+          role: "STUDENT" as UserRole,
+          status: "ACTIVE" as AccountStatus,
+        };
+
+        vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+          id: "u-1",
+          email: "user@juniv.edu",
+          status: "OTP_PENDING" as AccountStatus,
+          otpCode: "123456",
+          otpExpiresAt: new Date(Date.now() + 60_000),
+        } as unknown as User);
+
+        vi.mocked(usersRepo.activate).mockResolvedValue(
+          activeUser as unknown as User,
+        );
+
+        const res = await verifyOtp(" USER@JUNIV.EDU ", "123456");
+
+        expect(usersRepo.findByEmail).toHaveBeenCalledWith("user@juniv.edu");
+
+        expect(usersRepo.activate).toHaveBeenCalledWith("u-1");
+
+        expect(createSession).toHaveBeenCalledWith({
+          id: "u-1",
+          name: "User One",
+          email: "user@juniv.edu",
+          role: "STUDENT",
+          status: "ACTIVE",
+        });
+
+        expect(res).toEqual({
+          success: true,
+        });
+      });
+    });
   });
 });
