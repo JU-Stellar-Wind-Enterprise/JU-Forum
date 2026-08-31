@@ -25,10 +25,10 @@ async function main() {
   const defaultPasswordHash = await bcrypt.hash("123swe", 10);
 
   // 2. Create Users
-  const admin = await prisma.user.create({
+  const sysadmin = await prisma.user.create({
     data: {
       name: "System Admin",
-      email: "admin@juniv.edu",
+      email: "sysadmin@juniv.edu",
       passwordHash: defaultPasswordHash,
       role: UserRole.SYSTEM_ADMIN,
       status: AccountStatus.ACTIVE,
@@ -37,7 +37,7 @@ async function main() {
 
   const student1 = await prisma.user.create({
     data: {
-      name: "Alice Student",
+      name: "Student One",
       email: "student1@juniv.edu",
       passwordHash: defaultPasswordHash,
       role: UserRole.STUDENT,
@@ -47,10 +47,30 @@ async function main() {
 
   await prisma.user.create({
     data: {
-      name: "Bob Student",
+      name: "Student Two",
       email: "student2@juniv.edu",
       passwordHash: defaultPasswordHash,
       role: UserRole.STUDENT,
+      status: AccountStatus.ACTIVE,
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      name: "Faculty One",
+      email: "faculty1@juniv.edu",
+      passwordHash: defaultPasswordHash,
+      role: UserRole.FACULTY,
+      status: AccountStatus.ACTIVE,
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      name: "Staff One",
+      email: "staff1@juniv.edu",
+      passwordHash: defaultPasswordHash,
+      role: UserRole.STAFF,
       status: AccountStatus.ACTIVE,
     },
   });
@@ -61,7 +81,7 @@ async function main() {
       name: "General Discussion",
       description: "A place for general university discussions.",
       isApproved: true,
-      ownerId: admin.id,
+      ownerId: sysadmin.id,
     },
   });
 
@@ -70,7 +90,7 @@ async function main() {
     data: {
       title: "Welcome to the JU Forum!",
       content: "This is the first post. Feel free to start discussions here.",
-      authorId: admin.id,
+      authorId: sysadmin.id,
       subforumId: subforum.id,
     },
   });
@@ -82,7 +102,7 @@ async function main() {
       content: "Core features are now live for testing.",
       priority: PriorityLevel.HIGH,
       targetAudience: TargetAudience.ALL,
-      authorId: admin.id,
+      authorId: sysadmin.id,
     },
   });
 
