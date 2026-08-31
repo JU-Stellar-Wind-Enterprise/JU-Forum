@@ -16,11 +16,22 @@ const creators: UserRole[] = [
 const priorities: PriorityLevel[] = ["LOW", "MEDIUM", "HIGH", "URGENT"];
 const audiences: TargetAudience[] = ["ALL", "STUDENTS", "FACULTY", "STAFF"];
 
-/** Checks whether a role may publish announcements. */
+/**
+ * Checks whether a user role is allowed to publish announcements.
+ *
+ * @param role - The role whose announcement permission is being checked.
+ * @returns `true` when the role may publish announcements; otherwise `false`.
+ */
 export const canCreateAnnouncement = (role: UserRole) =>
   creators.includes(role);
 
-/** Creates a validated announcement for an authorized role. */
+/**
+ * Validates and creates an announcement for an authorized user role.
+ *
+ * @param input - Announcement fields plus the authenticated author's ID and role.
+ * @returns A result containing the new announcement ID, or a user-facing error.
+ * @throws If an unexpected repository or database operation fails.
+ */
 export async function createAnnouncement(input: {
   title: string;
   content: string;
@@ -57,7 +68,13 @@ export async function createAnnouncement(input: {
   return { success: true, data: { id: created.id } };
 }
 
-/** Lists active announcements visible to a user's role. */
+/**
+ * Lists unexpired announcements visible to a particular user role.
+ *
+ * @param role - The viewer's role, used to select permitted target audiences.
+ * @returns Matching announcements ordered by priority and creation time.
+ * @throws If the database query fails.
+ */
 export const listAnnouncements = (role: UserRole) =>
   announcements.listAnnouncements(
     role === "STUDENT"
@@ -69,6 +86,12 @@ export const listAnnouncements = (role: UserRole) =>
           : ["ALL"],
   );
 
-/** Retrieves an active announcement by ID. */
+/**
+ * Retrieves an announcement only when it exists and has not expired.
+ *
+ * @param id - The unique ID of the announcement to retrieve.
+ * @returns The active announcement with public author details, or `null`.
+ * @throws If the database query fails.
+ */
 export const findAnnouncementById = (id: string) =>
   announcements.findAnnouncementById(id);
