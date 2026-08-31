@@ -54,11 +54,6 @@ describe("auth.service", () => {
     vi.clearAllMocks();
   });
 
-  // ==========================================================
-  // 4. SIGNUP TESTS
-  // Total: 7 tests
-  // ==========================================================
-
   describe("signup", () => {
     // --------------------------------------------------------
     // SIGNUP TEST 1
@@ -95,6 +90,25 @@ describe("auth.service", () => {
 
       expect(res).toEqual({
         message: "Password must be at least 6 characters.",
+      });
+
+      expect(usersRepo.findByEmail).not.toHaveBeenCalled();
+    });
+    // --------------------------------------------------------
+    // SIGNUP TEST 3
+    // Name is empty or contains only spaces
+    // --------------------------------------------------------
+
+    it("returns error if name is empty or whitespace", async () => {
+      const res = await signup({
+        name: "   ",
+        email: "test@juniv.edu",
+        password: "password123",
+        role: "STUDENT",
+      });
+
+      expect(res).toEqual({
+        message: "Name is required.",
       });
 
       expect(usersRepo.findByEmail).not.toHaveBeenCalled();
