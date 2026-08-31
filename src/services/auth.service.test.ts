@@ -167,5 +167,97 @@ describe("auth.service", () => {
 
       expect(usersRepo.createPending).not.toHaveBeenCalled();
     });
+
+    // --------------------------------------------------------
+    // SIGNUP TEST 6
+    // Successful signup
+    // Password is hashed, user is created, and OTP is sent
+    // --------------------------------------------------------
+
+    it("hashes password, creates pending user, sends OTP email, and returns success", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
+
+      vi.mocked(bcrypt.hash).mockResolvedValue("hashed_pass_123" as never);
+
+      vi.mocked(usersRepo.createPending).mockResolvedValue({
+        id: "u-new",
+        name: "New Student",
+        email: "newstudent@juniv.edu",
+        role: "STUDENT" as UserRole,
+        status: "OTP_PENDING" as AccountStatus,
+      } as unknown as User);
+
+      vi.mocked(sendOtpEmail).mockResolvedValue(undefined);
+
+      const res = await signup({
+        name: "  New Student  ",
+        email: "  NewStudent@juniv.edu  ",
+        password: "securepassword",
+        role: "STUDENT",
+      });
+
+      expect(bcrypt.hash).toHaveBeenCalledWith("securepassword", 10);
+
+      expect(usersRepo.createPending).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "New Student",
+          email: "newstudent@juniv.edu",
+          passwordHash: "hashed_pass_123",
+          role: "STUDENT",
+          otpCode: expect.stringMatching(/^\d{6}$/),
+          otpExpiresAt: expect.any(Date),
+        }),
+      );
+
+      expect(sendOtpEmail).toHaveBeenCalledWith(
+        "newstudent@juniv.edu",
+        expect.stringMatching(/^\d{6}$/),
+      );
+
+      expect(res).toEqual({
+        success: true,
+        email: "newstudent@juniv.edu",
+      });
+    });
+
+    // --------------------------------------------------------
+    // SIGNUP TEST 7
+    // Mailer fails while sending OTP
+    // --------------------------------------------------------
+
+    it("handles mailer failure gracefully with an error result", async () => {
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue(null);
+
+      vi.mocked(bcrypt.hash).mockResolvedValue("hashed_pass_123" as never);
+
+      vi.mocked(usersRepo.createPending).mockResolvedValue({
+        id: "u-new",
+        name: "New Student",
+        email: "newstudent@juniv.edu",
+      } as unknown as User);
+
+      vi.mocked(sendOtpEmail).mockRejectedValue(
+        new Error("SMTP Connection Failed"),
+      );
+
+      const res = await signup({
+        name: "New Student",
+        email: "newstudent@juniv.edu",
+        password: "securepassword",
+        role: "STUDENT",
+      });
+
+      expect(res).toEqual({
+        message: "Could not send the OTP email. Check SMTP settings.",
+      });
+
+      expect(consoleSpy).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
   });
 });
