@@ -584,5 +584,105 @@ describe("auth.service", () => {
 
       expect(bcrypt.compare).not.toHaveBeenCalled();
     });
+    // --------------------------------------------------------
+    // LOGIN TEST 6
+    // Wrong password with fewer than 5 failed attempts
+    // --------------------------------------------------------
+
+    it("increments failedLoginAttempts and returns invalid credentials on wrong password (< 5 attempts)", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "user@juniv.edu",
+        isDeleted: false,
+        lockoutUntil: null,
+        status: "ACTIVE" as AccountStatus,
+        passwordHash: "correct_hash",
+        failedLoginAttempts: 2,
+      } as unknown as User);
+
+      vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
+
+      const res = await login("user@juniv.edu", "wrongpass");
+
+      expect(usersRepo.updateLogin).toHaveBeenCalledWith("u-1", {
+        failedLoginAttempts: 3,
+      });
+
+      expect(res).toEqual({
+        message: "Invalid email or password.",
+      });
+    });
+
+    // --------------------------------------------------------
+    // LOGIN TEST 7
+    // Account is locked after 5 failed attempts
+    // --------------------------------------------------------
+
+    it("locks account after 5 failed attempts and returns lockout message", async () => {
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue({
+        id: "u-1",
+        email: "user@juniv.edu",
+        isDeleted: false,
+        lockoutUntil: null,
+        status: "ACTIVE" as AccountStatus,
+        passwordHash: "correct_hash",
+        failedLoginAttempts: 4,
+      } as unknown as User);
+
+      vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
+
+      const res = await login("user@juniv.edu", "wrongpass");
+
+      expect(usersRepo.updateLogin).toHaveBeenCalledWith("u-1", {
+        failedLoginAttempts: 5,
+        lockoutUntil: expect.any(Date),
+      });
+
+      expect(res.message).toMatch(/^Too many attempts\. Try again after /);
+    });
+
+    // --------------------------------------------------------
+    // LOGIN TEST 8
+    // Successful login with correct password
+    // --------------------------------------------------------
+
+    it("resets failedLoginAttempts, creates session, and returns success on valid credentials", async () => {
+      const user = {
+        id: "u-1",
+        name: "Good User",
+        email: "good@juniv.edu",
+        role: "STUDENT" as UserRole,
+        isDeleted: false,
+        lockoutUntil: null,
+        status: "ACTIVE" as AccountStatus,
+        passwordHash: "correct_hash",
+        failedLoginAttempts: 3,
+      };
+
+      vi.mocked(usersRepo.findByEmail).mockResolvedValue(
+        user as unknown as User,
+      );
+
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+
+      const res = await login("good@juniv.edu", "correctpass");
+
+      expect(usersRepo.updateLogin).toHaveBeenCalledWith("u-1", {
+        failedLoginAttempts: 0,
+        lockoutUntil: null,
+      });
+
+      expect(createSession).toHaveBeenCalledWith({
+        id: "u-1",
+        name: "Good User",
+        email: "good@juniv.edu",
+        role: "STUDENT",
+        status: "ACTIVE",
+      });
+
+      expect(res).toEqual({
+        success: true,
+      });
+    });
   });
 });
