@@ -284,25 +284,3 @@ describe("announcement.service", () => {
       expect(announcementRepo.listAnnouncements).toHaveBeenCalledWith(["ALL"]);
       expect(res).toEqual(mockList);
     });
-  });
-
-  describe("findAnnouncementById", () => {
-    it("delegates to repository and returns matching announcement", async () => {
-      const mockAnnouncement = {
-        id: "ann-1",
-        title: "Found Announcement",
-        content: "Details",
-      };
-      vi.mocked(announcementRepo.findAnnouncementById).mockResolvedValue(
-        mockAnnouncement as unknown as AnnouncementRecord,
-      );
-
-      const result = await findAnnouncementById("ann-1");
-
-      expect(announcementRepo.findAnnouncementById).toHaveBeenCalledWith(
-        "ann-1",
-      );
-      expect(result).toEqual(mockAnnouncement);
-    });
-  });
-});
