@@ -13,27 +13,38 @@ git clone https://github.com/JU-Stellar-Wind-Enterprise/JU-Forum.git
 cd JU-Forum
 corepack enable # To use pnpm
 pnpm install
-
 ```
 
 ---
 
 ## 2. Local Development & Testing
 
+### Generate Prisma Client
+
+First run this to generate the Prisma client:
+
+```bash
+pnpm prisma generate
+```
+
+### Setup environment variables
+
+Create or collect the `.env` file at the project root with appropriate environment variables.
+
+> For our project, you can find it in our **Discord** server.
+
 ### Run Development Server
 
 ```bash
 pnpm dev
-
 ```
 
-Open your browser and navigate to `http://localhost:3000`.
+Open your browser and navigate to `http://localhost:3000` or the url shown in your terminal.
 
 ### Run Unit Tests
 
 ```bash
 pnpm test
-
 ```
 
 Make sure all unit tests pass before opening a PR.
@@ -44,29 +55,29 @@ Make sure all unit tests pass before opening a PR.
 
 ### Create a Branch
 
-Do not commit directly to `main` or `develop`. Create a new branch using the format `<type>/<your-name>/<short-description>`:
+Do not commit directly to `main` or `develop`. Create a new branch using the format `<type>/<short-description>`:
 
 ```bash
-git checkout -b feat/kaium/user-auth
+git checkout -b feat/user-auth
 
 ```
 
 #### Branch Types (`<type>`):
 
 * `feat/` — New feature or major enhancement
-(e.g., `feat/kaium/user-auth`)
+(e.g., `feat/user-auth`)
 * `fix/` — Bug fix
-(e.g., `fix/mawa/login-redirect-loop`)
+(e.g., `fix/login-redirect-loop`)
 * `docs/` — Documentation changes only
-(e.g., `docs/robin/update-readme`)
+(e.g., `docs/update-readme`)
 * `style/` — Formatting, CSS changes, missing semi-colons
-(e.g., `style/arman/navbar-responsive-layout`)
+(e.g., `style/navbar-responsive-layout`)
 * `refactor/` — Code changes that neither fix a bug nor add a feature
-(e.g., `refactor/mariam/cleanup-api-routes`)
+(e.g., `refactor/cleanup-api-routes`)
 * `test/` — Adding or updating tests
-(e.g., `test/orthita/auth-unit-tests`)
+(e.g., `test/auth-unit-tests`)
 * `chore/` — Maintenance tasks, dependency updates, or config changes
-(e.g., `chore/trisha/update-tailwind-config`)
+(e.g., `chore/update-tailwind-config`)
 
 > **Note:** Use lowercase hyphenated words (`kebab-case`) for your short description (e.g., `user-auth`, not `userAuth` or `user_auth`).
 
