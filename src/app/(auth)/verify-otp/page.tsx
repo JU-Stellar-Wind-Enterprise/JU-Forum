@@ -1,5 +1,6 @@
 import { resendOtpAction, verifyOtpAction } from "@/actions/auth.actions";
 import { OtpForm, ResendOtpForm } from "@/components/auth/AuthForm";
+
 export default async function VerifyOtpPage({
   searchParams,
 }: {
