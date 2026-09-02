@@ -1,0 +1,9 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "name": "JU Forum Documentation",
+  "exclude": ["**/generated/**", "**/*.test.*", "**/*.spec.*"],
+  "cleanOutputDir": true
+}
