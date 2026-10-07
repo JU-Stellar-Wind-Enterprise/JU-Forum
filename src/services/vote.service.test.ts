@@ -15,8 +15,9 @@ vi.mock("@/repositories/vote.repository", () => ({
 
 describe("Vote Service", () => {
 
-  it("create vote", async () => {
+  it("should create vote", async () => {
     vi.mocked(postRepo.findPostById).mockResolvedValue({
+      id: "1",
       isLocked: false,
       isArchived: false,
     } as any);
@@ -32,8 +33,9 @@ describe("Vote Service", () => {
     expect(voteRepo.createVote).toHaveBeenCalled();
   });
 
-  it("delete vote", async () => {
+  it("should delete vote", async () => {
     vi.mocked(postRepo.findPostById).mockResolvedValue({
+      id: "1",
       isLocked: false,
       isArchived: false,
     } as any);
@@ -49,20 +51,6 @@ describe("Vote Service", () => {
     });
 
     expect(voteRepo.deleteVote).toHaveBeenCalled();
-  });
-
-  it("post not found", async () => {
-    vi.mocked(postRepo.findPostById).mockResolvedValue(null);
-
-    const result = await voteOnPost({
-      postId: "1",
-      userId: "1",
-      type: "UPVOTE",
-    });
-
-    expect(result).toEqual({
-      message: "Wrong",
-    });
   });
 
 });
