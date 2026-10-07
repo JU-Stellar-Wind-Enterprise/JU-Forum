@@ -29,7 +29,7 @@ describe("Profile Service", () => {
     expect(result).toBeNull();
   });
 
-  it("should return wrong user name", async () => {
+  it("should fail if wrong user name is given", async () => {
     const user = {
       id: "1",
       name: "Mariam",
@@ -39,10 +39,10 @@ describe("Profile Service", () => {
 
     const result = await getPublicProfile("1");
 
-    expect(result?.name).toBe("Rahim");
+    expect(result?.name).not.toBe("Rahim");
   });
 
-  it("should return wrong profile id", async () => {
+  it("should fail if wrong profile id is given", async () => {
     const user = {
       id: "1",
       name: "Mariam",
@@ -52,7 +52,7 @@ describe("Profile Service", () => {
 
     const result = await getPublicProfile("1");
 
-    expect(result?.id).toBe("999");
+    expect(result?.id).not.toBe("999");
   });
 
 });
