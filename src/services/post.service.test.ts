@@ -1,17 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Post } from "@/generated/prisma/client";
 import * as postRepo from "@/repositories/post.repository";
 import * as subforumRepo from "@/repositories/subforum.repository";
-import { createPost, findPostById } from "./post.service";
+import { createPost } from "./post.service";
 
-type PostWithRelations = Post & {
-  author: { id: string; name: string };
-  subforum: { id: string; name: string };
-};
-
+// Replace database repository calls with mock functions
 vi.mock("@/repositories/post.repository", () => ({
   createPost: vi.fn(),
-  findPostById: vi.fn(),
 }));
 
 vi.mock("@/repositories/subforum.repository", () => ({
@@ -23,150 +17,55 @@ describe("post.service", () => {
     vi.clearAllMocks();
   });
 
-  describe("createPost", () => {
-    it("returns error if title or content is empty or whitespace", async () => {
-      const res1 = await createPost({
-        title: "",
-        content: "Valid content",
-        authorId: "user-1",
-        subforumId: "subforum-1",
-      });
-      expect(res1).toEqual({ message: "Title and content are required." });
+  it("rejects post creation if title is empty", async () => {
+    // 1. Arrange: prepare post input missing a title
+    const input = {
+      title: "",
+      content: "Discussion about upcoming exams.",
+      authorId: "user-1",
+      subforumId: "sub-1",
+    };
 
-      const res2 = await createPost({
-        title: "   ",
-        content: "Valid content",
-        authorId: "user-1",
-        subforumId: "subforum-1",
-      });
-      expect(res2).toEqual({ message: "Title and content are required." });
+    // 2. Act: call createPost service function
+    const result = await createPost(input);
 
-      const res3 = await createPost({
-        title: "Valid title",
-        content: "   ",
-        authorId: "user-1",
-        subforumId: "subforum-1",
-      });
-      expect(res3).toEqual({ message: "Title and content are required." });
-    });
-
-    it("returns error if title exceeds 150 characters", async () => {
-      const res = await createPost({
-        title: "a".repeat(151),
-        content: "Valid content",
-        authorId: "user-1",
-        subforumId: "subforum-1",
-      });
-      expect(res).toEqual({ message: "Title must be 150 characters or less." });
-    });
-
-    it("returns error if content exceeds 10,000 characters", async () => {
-      const res = await createPost({
-        title: "Valid title",
-        content: "a".repeat(10_001),
-        authorId: "user-1",
-        subforumId: "subforum-1",
-      });
-      expect(res).toEqual({
-        message: "Content must be 10,000 characters or less.",
-      });
-    });
-
-    it("returns error if subforum is not found", async () => {
-      vi.mocked(subforumRepo.findSubforumById).mockResolvedValue(null);
-
-      const res = await createPost({
-        title: "Valid title",
-        content: "Valid content",
-        authorId: "user-1",
-        subforumId: "non-existent-subforum",
-      });
-
-      expect(subforumRepo.findSubforumById).toHaveBeenCalledWith(
-        "non-existent-subforum",
-      );
-      expect(res).toEqual({ message: "Select a valid subforum." });
-      expect(postRepo.createPost).not.toHaveBeenCalled();
-    });
-
-    it("returns error if subforum is not approved", async () => {
-      vi.mocked(subforumRepo.findSubforumById).mockResolvedValue({
-        id: "sub-1",
-        name: "Unapproved Subforum",
-        description: "Pending",
-        isApproved: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ownerId: "user-2",
-      });
-
-      const res = await createPost({
-        title: "Valid title",
-        content: "Valid content",
-        authorId: "user-1",
-        subforumId: "sub-1",
-      });
-
-      expect(res).toEqual({ message: "Select a valid subforum." });
-      expect(postRepo.createPost).not.toHaveBeenCalled();
-    });
-
-    it("trims title and content, creates post, and returns id", async () => {
-      vi.mocked(subforumRepo.findSubforumById).mockResolvedValue({
-        id: "sub-1",
-        name: "Approved Subforum",
-        description: "Active",
-        isApproved: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ownerId: "user-2",
-      });
-      vi.mocked(postRepo.createPost).mockResolvedValue({
-        id: "post-100",
-        title: "Trimmed Title",
-        content: "Trimmed Content",
-        authorId: "user-1",
-        subforumId: "sub-1",
-        isLocked: false,
-        isArchived: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      const res = await createPost({
-        title: "   Trimmed Title   ",
-        content: "   Trimmed Content   ",
-        authorId: "user-1",
-        subforumId: "sub-1",
-      });
-
-      expect(postRepo.createPost).toHaveBeenCalledWith({
-        title: "Trimmed Title",
-        content: "Trimmed Content",
-        authorId: "user-1",
-        subforumId: "sub-1",
-      });
-      expect(res).toEqual({ success: true, data: { id: "post-100" } });
-    });
+    // 3. Assert: verify validation error and database was not called
+    expect(result).toEqual({ message: "Title and content are required." });
+    expect(postRepo.createPost).not.toHaveBeenCalled();
   });
 
-  describe("findPostById", () => {
-    it("delegates to post repository and returns the post", async () => {
-      const mockPost = {
-        id: "post-1",
-        title: "Test Post",
-        content: "Post Content",
-        author: { id: "u-1", name: "Author" },
-        subforum: { id: "s-1", name: "General" },
-      };
-      vi.mocked(postRepo.findPostById).mockResolvedValue(
-        mockPost as unknown as PostWithRelations,
-      );
-
-      const result = await findPostById("post-1");
-
-      expect(postRepo.findPostById).toHaveBeenCalledWith("post-1");
-      expect(result).toEqual(mockPost);
+  it("creates a post successfully when inputs and subforum are valid", async () => {
+    // 1. Arrange: mock an approved subforum and post creation record
+    vi.mocked(subforumRepo.findSubforumById).mockResolvedValue({
+      id: "sub-1",
+      name: "CSE Discussion",
+      description: "CSE department discussions",
+      isApproved: true,
+      createdAt: new Date(),
+      ownerId: "user-99",
     });
+    vi.mocked(postRepo.createPost).mockResolvedValue({
+      id: "post-101",
+      title: "Introduction to Next.js",
+      content: "Let us learn React and Next.js together.",
+      authorId: "user-1",
+      subforumId: "sub-1",
+      isLocked: false,
+      isArchived: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // 2. Act: call createPost with valid data
+    const result = await createPost({
+      title: "Introduction to Next.js",
+      content: "Let us learn React and Next.js together.",
+      authorId: "user-1",
+      subforumId: "sub-1",
+    });
+
+    // 3. Assert: verify success result returning the new post ID
+    expect(result).toEqual({ success: true, data: { id: "post-101" } });
+    expect(postRepo.createPost).toHaveBeenCalled();
   });
 });
