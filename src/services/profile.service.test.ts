@@ -6,38 +6,53 @@ vi.mock("@/repositories/profile.repository", () => ({
   findPublicProfile: vi.fn(),
 }));
 
-describe("profile.service", () => {
-  describe("getPublicProfile", () => {
-    it("delegates to findPublicProfile and returns the user profile", async () => {
-      const mockProfile = {
-        id: "user-1",
-        name: "Test User",
-        email: "user@juniv.edu",
-        role: "STUDENT" as const,
-        batch: "49",
-        nickname: "tester",
-        profilePictureUrl: null,
-        aboutMe: "Hello",
-        status: "ACTIVE" as const,
-        createdAt: new Date(),
-      };
-      vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(mockProfile);
+describe("Profile Service", () => {
 
-      const result = await getPublicProfile("user-1");
+  it("should get user profile", async () => {
+    const user = {
+      id: "1",
+      name: "Mariam",
+    };
 
-      expect(profileRepo.findPublicProfile).toHaveBeenCalledWith("user-1");
-      expect(result).toEqual(mockProfile);
-    });
+    vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(user as any);
 
-    it("returns null when profile does not exist", async () => {
-      vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(null);
+    const result = await getPublicProfile("1");
 
-      const result = await getPublicProfile("non-existent");
-
-      expect(profileRepo.findPublicProfile).toHaveBeenCalledWith(
-        "non-existent",
-      );
-      expect(result).toBeNull();
-    });
+    expect(result).toEqual(user);
   });
+
+  it("should return null if profile not found", async () => {
+    vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(null);
+
+    const result = await getPublicProfile("2");
+
+    expect(result).toBeNull();
+  });
+
+  it("should return wrong user name", async () => {
+    const user = {
+      id: "1",
+      name: "Mariam",
+    };
+
+    vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(user as any);
+
+    const result = await getPublicProfile("1");
+
+    expect(result?.name).toBe("Rahim");
+  });
+
+  it("should return wrong profile id", async () => {
+    const user = {
+      id: "1",
+      name: "Mariam",
+    };
+
+    vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(user as any);
+
+    const result = await getPublicProfile("1");
+
+    expect(result?.id).toBe("999");
+  });
+
 });
