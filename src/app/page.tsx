@@ -39,7 +39,7 @@ export default async function Home() {
 
         <nav
           className="mt-8 grid gap-3 sm:grid-cols-2"
-          aria-label="Sprint 1 features"
+          aria-label="Features navigation"
         >
           <FeatureLink
             href="/subforum"
@@ -60,6 +60,16 @@ export default async function Home() {
             href="/profile"
             title="My profile"
             description="View your public member profile."
+          />
+          <FeatureLink
+            href="/polls"
+            title="Community polls"
+            description="Vote and view community opinion polls."
+          />
+          <FeatureLink
+            href="/poll-request"
+            title="Propose poll"
+            description="Submit a poll request for moderator review."
           />
         </nav>
       </section>

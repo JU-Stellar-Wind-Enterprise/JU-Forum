@@ -244,6 +244,7 @@ model Poll {
   description String?
   expiresAt   DateTime?
   isClosed    Boolean   @default(false)
+  isApproved  Boolean   @default(false)
   authorId    String
   subforumId  String?
   postId      String?
