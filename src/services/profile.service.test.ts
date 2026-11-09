@@ -7,7 +7,6 @@ vi.mock("@/repositories/profile.repository", () => ({
 }));
 
 describe("Profile Service", () => {
-
   it("should get user profile", async () => {
     const user = {
       id: "1",
@@ -54,5 +53,4 @@ describe("Profile Service", () => {
 
     expect(result?.id).not.toBe("999");
   });
-
 });
