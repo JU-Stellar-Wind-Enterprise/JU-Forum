@@ -42,6 +42,11 @@ export default async function Home() {
           aria-label="Features navigation"
         >
           <FeatureLink
+            href="/news-feed"
+            title="News feed"
+            description="View recent discussions, followed subforums, and announcements."
+          />
+          <FeatureLink
             href="/subforum"
             title="Subforums"
             description="Browse or create discussion spaces."

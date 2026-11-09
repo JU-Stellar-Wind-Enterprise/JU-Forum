@@ -38,3 +38,46 @@ export async function createSubforum(input: {
  * @throws If the database query fails.
  */
 export const listSubforums = () => subforums.listSubforums();
+
+/**
+ * Checks whether a user is currently following a subforum.
+ *
+ * @param userId - The authenticated user's ID.
+ * @param subforumId - The subforum's unique ID.
+ * @returns `true` if the user follows the subforum; otherwise `false`.
+ * @throws If the database query fails.
+ */
+export const isFollowingSubforum = (userId: string, subforumId: string) =>
+  subforums.isUserFollowingSubforum(userId, subforumId);
+
+/**
+ * Toggles a user's follow subscription on an approved subforum.
+ *
+ * @param input - The authenticated user ID and target subforum ID.
+ * @returns The resulting follow state, or a user-facing error message.
+ * @throws If an unexpected repository or database operation fails.
+ */
+export async function toggleSubforumFollow(input: {
+  userId: string;
+  subforumId: string;
+}): Promise<ActionResult<{ following: boolean }>> {
+  const userId = input.userId.trim();
+  if (!userId) return { message: "You must be logged in." };
+
+  const subforum = await subforums.findSubforumById(input.subforumId);
+  if (!subforum || !subforum.isApproved) {
+    return { message: "Subforum not found." };
+  }
+
+  const alreadyFollowing = await subforums.isUserFollowingSubforum(
+    userId,
+    input.subforumId,
+  );
+  if (alreadyFollowing) {
+    await subforums.unfollowSubforum(userId, input.subforumId);
+    return { success: true, data: { following: false } };
+  }
+
+  await subforums.followSubforum(userId, input.subforumId);
+  return { success: true, data: { following: true } };
+}
