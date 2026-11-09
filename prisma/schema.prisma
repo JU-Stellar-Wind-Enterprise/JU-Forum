@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -52,6 +50,21 @@ enum VoteType {
   DOWNVOTE
 }
 
+enum ReportReason {
+  SPAM
+  HARASSMENT
+  OFFENSIVE
+  FALSE_INFORMATION
+  ACADEMIC_MISCONDUCT
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
 // ==========================================
 // MODELS
 // ==========================================
@@ -66,25 +79,34 @@ model User {
   status              AccountStatus @default(PENDING_APPROVAL)
   appliedForModerator Boolean       @default(false)
 
-  nickname            String?       @unique
+  nickname            String?   @unique
   profilePictureUrl   String?
   aboutMe             String?
   nicknameLastChanged DateTime?
 
   otpCode             String?
   otpExpiresAt        DateTime?
-  failedLoginAttempts Int           @default(0)
+  failedLoginAttempts Int       @default(0)
   lockoutUntil        DateTime?
-  
-  isDeleted           Boolean       @default(false) // Soft delete to preserve posts
 
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  isDeleted Boolean @default(false)
 
-  subforums           Subforum[]    @relation("SubforumOwner")
-  posts               Post[]
-  announcements       Announcement[]
-  postVotes           PostVote[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  subforums          Subforum[]          @relation("SubforumOwner")
+  posts              Post[]
+  announcements      Announcement[]
+  postVotes          PostVote[]
+  comments           Comment[]
+  commentVotes       CommentVote[]
+  polls              Poll[]
+  pollVotes          PollVote[]
+  reportsFiled       Report[]            @relation("ReportedBy")
+  reportsReviewed    Report[]            @relation("ReviewedBy")
+  followedSubforums  SubforumFollow[]
+  moderatedSubforums SubforumModerator[]
 
   @@map("users")
 }
@@ -98,11 +120,40 @@ model Subforum {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  owner       User     @relation("SubforumOwner", fields: [ownerId], references: [id])
-  posts       Post[]
+  owner      User                @relation("SubforumOwner", fields: [ownerId], references: [id])
+  posts      Post[]
+  polls      Poll[]
+  followers  SubforumFollow[]
+  moderators SubforumModerator[]
 
   @@index([ownerId])
   @@map("subforums")
+}
+
+model SubforumFollow {
+  userId     String
+  subforumId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subforum Subforum @relation(fields: [subforumId], references: [id], onDelete: Cascade)
+
+  @@id([userId, subforumId])
+  @@index([subforumId])
+  @@map("subforum_follows")
+}
+
+model SubforumModerator {
+  userId     String
+  subforumId String
+  assignedAt DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subforum Subforum @relation(fields: [subforumId], references: [id], onDelete: Cascade)
+
+  @@id([userId, subforumId])
+  @@index([subforumId])
+  @@map("subforum_moderators")
 }
 
 model Post {
@@ -116,15 +167,131 @@ model Post {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  author     User       @relation(fields: [authorId], references: [id])
-  subforum   Subforum   @relation(fields: [subforumId], references: [id], onDelete: Cascade)
-  votes      PostVote[]
+  author   User       @relation(fields: [authorId], references: [id])
+  subforum Subforum   @relation(fields: [subforumId], references: [id], onDelete: Cascade)
+  votes    PostVote[]
+  comments Comment[]
+  polls    Poll[]
+  reports  Report[]
 
   @@index([subforumId])
   @@index([authorId])
   @@index([createdAt])
   @@map("posts")
 }
+
+model PostVote {
+  userId String
+  postId String
+  type   VoteType
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([postId])
+  @@map("post_votes")
+}
+
+// ------------------------------------------
+// COMMENTS & COMMENT VOTES
+// ------------------------------------------
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  isDeleted Boolean  @default(false)
+  authorId  String
+  postId    String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author  User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post    Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent  Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[]     @relation("CommentReplies")
+  votes   CommentVote[]
+  reports Report[]
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model CommentVote {
+  userId    String
+  commentId String
+  type      VoteType
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@id([userId, commentId])
+  @@index([commentId])
+  @@map("comment_votes")
+}
+
+// ------------------------------------------
+// POLLS & POLL VOTES
+// ------------------------------------------
+
+model Poll {
+  id          String    @id @default(uuid())
+  question    String
+  description String?
+  expiresAt   DateTime?
+  isClosed    Boolean   @default(false)
+  authorId    String
+  subforumId  String?
+  postId      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  author   User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  subforum Subforum?    @relation(fields: [subforumId], references: [id], onDelete: Cascade)
+  post     Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  options  PollOption[]
+  votes    PollVote[]
+
+  @@index([subforumId])
+  @@index([postId])
+  @@index([authorId])
+  @@map("polls")
+}
+
+model PollOption {
+  id     String @id @default(uuid())
+  text   String
+  pollId String
+
+  poll  Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes PollVote[]
+
+  @@index([pollId])
+  @@map("poll_options")
+}
+
+model PollVote {
+  userId    String
+  pollId    String
+  optionId  String
+  createdAt DateTime @default(now())
+
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poll   Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, pollId])
+  @@index([pollId])
+  @@index([optionId])
+  @@map("poll_votes")
+}
+
+// ------------------------------------------
+// ANNOUNCEMENTS
+// ------------------------------------------
 
 model Announcement {
   id             String         @id @default(uuid())
@@ -137,22 +304,43 @@ model Announcement {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  author         User           @relation(fields: [authorId], references: [id])
+  author  User     @relation(fields: [authorId], references: [id])
+  reports Report[]
 
   @@index([authorId])
   @@index([createdAt])
   @@map("announcements")
 }
 
-model PostVote {
-  userId String
-  postId String
-  type   VoteType
+// ------------------------------------------
+// REPORTING & MODERATION
+// ------------------------------------------
 
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+model Report {
+  id             String       @id @default(uuid())
+  reason         ReportReason
+  remarks        String?
+  status         ReportStatus @default(PENDING)
+  reporterId     String
+  postId         String?
+  commentId      String?
+  announcementId String?
+  reviewedById   String?
+  reviewNotes    String?
+  reviewedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  @@id([userId, postId])
+  reporter     User          @relation("ReportedBy", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewedBy   User?         @relation("ReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  post         Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment      Comment?      @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  announcement Announcement? @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+  @@index([status])
   @@index([postId])
-  @@map("post_votes")
+  @@index([commentId])
+  @@index([announcementId])
+  @@map("reports")
 }
