@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { logoutAction } from "@/actions/auth.actions";
 import { getCurrentUser } from "@/lib/session";
+import { canModerateReports } from "@/services/report.service";
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -76,6 +77,13 @@ export default async function Home() {
             title="Propose poll"
             description="Submit a poll request for moderator review."
           />
+          {canModerateReports(user.role) && (
+            <FeatureLink
+              href="/moderation/reports"
+              title="Moderation queue"
+              description="Review reported posts, comments, and announcements."
+            />
+          )}
         </nav>
       </section>
     </main>

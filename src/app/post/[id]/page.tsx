@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { CommentSection } from "@/components/comment/CommentSection";
 import { PageShell } from "@/components/layout/PageShell";
 import { VoteButtons } from "@/components/post/VoteButtons";
+import { ReportModal } from "@/components/report/ReportModal";
 import { getCurrentUser } from "@/lib/session";
 import {
   canModerateComments,
@@ -51,11 +52,14 @@ export default async function PostDetailPage({
         <p className="mt-8 whitespace-pre-wrap text-slate-700">
           {post.content}
         </p>
-        <VoteButtons
-          postId={post.id}
-          {...votes}
-          disabled={isClosed || user.status !== "ACTIVE"}
-        />
+        <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+          <VoteButtons
+            postId={post.id}
+            {...votes}
+            disabled={isClosed || user.status !== "ACTIVE"}
+          />
+          <ReportModal postId={post.id} targetLabel="post" />
+        </div>
       </article>
 
       <CommentSection
