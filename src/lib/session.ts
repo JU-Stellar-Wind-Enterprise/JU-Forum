@@ -53,8 +53,10 @@ export async function getCurrentUser() {
     !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
   )
     return null;
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id },
     select: { id: true, name: true, email: true, role: true, status: true },
   });
+  if (!user || user.status !== "ACTIVE") return null;
+  return user;
 }

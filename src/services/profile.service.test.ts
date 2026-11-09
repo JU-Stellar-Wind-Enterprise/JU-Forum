@@ -7,14 +7,17 @@ vi.mock("@/repositories/profile.repository", () => ({
 }));
 
 describe("Profile Service", () => {
-
   it("should get user profile", async () => {
     const user = {
       id: "1",
       name: "Mariam",
     };
 
-    vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(user as any);
+    vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(
+      user as unknown as Awaited<
+        ReturnType<typeof profileRepo.findPublicProfile>
+      >,
+    );
 
     const result = await getPublicProfile("1");
 
@@ -35,7 +38,11 @@ describe("Profile Service", () => {
       name: "Mariam",
     };
 
-    vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(user as any);
+    vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(
+      user as unknown as Awaited<
+        ReturnType<typeof profileRepo.findPublicProfile>
+      >,
+    );
 
     const result = await getPublicProfile("1");
 
@@ -48,11 +55,14 @@ describe("Profile Service", () => {
       name: "Mariam",
     };
 
-    vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(user as any);
+    vi.mocked(profileRepo.findPublicProfile).mockResolvedValue(
+      user as unknown as Awaited<
+        ReturnType<typeof profileRepo.findPublicProfile>
+      >,
+    );
 
     const result = await getPublicProfile("1");
 
     expect(result?.id).not.toBe("999");
   });
-
 });

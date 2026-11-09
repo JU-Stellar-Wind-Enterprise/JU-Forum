@@ -42,6 +42,7 @@ describe("post.service", () => {
       description: "CSE department discussions",
       isApproved: true,
       createdAt: new Date(),
+      updatedAt: new Date(),
       ownerId: "user-99",
     });
     vi.mocked(postRepo.createPost).mockResolvedValue({

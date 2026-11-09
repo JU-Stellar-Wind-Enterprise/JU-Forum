@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as announcementRepo from "@/repositories/announcement.repository";
-import { canCreateAnnouncement, createAnnouncement } from "./announcement.service";
+import {
+  canCreateAnnouncement,
+  createAnnouncement,
+} from "./announcement.service";
 
 vi.mock("@/repositories/announcement.repository", () => ({
   createAnnouncement: vi.fn(),
