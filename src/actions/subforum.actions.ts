@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import * as subforumService from "@/services/subforum.service";
@@ -27,4 +28,33 @@ export async function createSubforumAction(
   });
   if (result.success) redirect(`/subforum/${result.data?.id}`);
   return result;
+}
+
+/**
+ * Toggles whether the current active user follows a given subforum.
+ *
+ * @param subforumId - The target subforum's unique ID.
+ * @returns The updated following status, or a user-facing error message.
+ */
+export async function toggleSubforumFollowAction(
+  subforumId: string,
+): Promise<ActionResult<{ following: boolean }>> {
+  const user = await getCurrentUser();
+  if (!user || user.status !== "ACTIVE") {
+    return { message: "You must be logged in." };
+  }
+
+  try {
+    const result = await subforumService.toggleSubforumFollow({
+      userId: user.id,
+      subforumId,
+    });
+    if (result.success) {
+      revalidatePath(`/subforum/${subforumId}`);
+      revalidatePath("/news-feed");
+    }
+    return result;
+  } catch {
+    return { message: "Unable to update follow status. Please try again." };
+  }
 }
