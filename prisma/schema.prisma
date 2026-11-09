@@ -82,6 +82,7 @@ model User {
   nickname            String?   @unique
   profilePictureUrl   String?
   aboutMe             String?
+  interests           String[]  @default([])
   nicknameLastChanged DateTime?
 
   otpCode             String?

@@ -11,7 +11,7 @@ export default async function ProfilePage() {
   if (!profile) redirect("/login");
   return (
     <PageShell centered>
-      <ProfileCard profile={profile} />
+      <ProfileCard profile={profile} isOwner />
     </PageShell>
   );
 }
