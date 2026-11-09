@@ -9,12 +9,13 @@ export default async function UserProfilePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  if (!(await getCurrentUser())) redirect("/login");
+  const currentUser = await getCurrentUser();
+  if (!currentUser) redirect("/login");
   const profile = await getPublicProfile((await params).id);
   if (!profile) notFound();
   return (
     <PageShell centered>
-      <ProfileCard profile={profile} />
+      <ProfileCard profile={profile} isOwner={currentUser.id === profile.id} />
     </PageShell>
   );
 }

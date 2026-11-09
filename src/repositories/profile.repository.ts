@@ -19,7 +19,58 @@ export const findPublicProfile = (id: string) =>
       nickname: true,
       profilePictureUrl: true,
       aboutMe: true,
+      interests: true,
       status: true,
       createdAt: true,
     },
+  });
+
+/**
+ * Finds a user by unique ID for internal business logic and validation checks.
+ *
+ * @param id - The unique ID of the user.
+ * @returns The user record or null if not found.
+ */
+export const findUserById = (id: string) =>
+  prisma.user.findUnique({
+    where: { id },
+  });
+
+/**
+ * Finds a user by nickname (case-insensitive) to verify uniqueness across the platform.
+ *
+ * @param nickname - The nickname to search.
+ * @returns The user record or null if not found.
+ */
+export const findUserByNickname = (nickname: string) =>
+  prisma.user.findFirst({
+    where: {
+      nickname: {
+        equals: nickname,
+        mode: "insensitive",
+      },
+      isDeleted: false,
+    },
+  });
+
+/**
+ * Updates a user's editable profile information.
+ *
+ * @param id - The unique ID of the user.
+ * @param data - The profile fields to update.
+ * @returns The updated user record.
+ */
+export const updateUserProfile = (
+  id: string,
+  data: {
+    nickname?: string | null;
+    profilePictureUrl?: string | null;
+    aboutMe?: string | null;
+    interests?: string[];
+    nicknameLastChanged?: Date;
+  },
+) =>
+  prisma.user.update({
+    where: { id },
+    data,
   });
